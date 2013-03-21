@@ -1,34 +1,18 @@
 var flash = require('connect-flash'),
     express = require('express'),
     mongo = require('mongodb'),
+    config = require('./config'),
+    mongoose = require('mongoose'),
     passport = require('passport'),
     util = require('util'),
+    api = require('./routes/api');
     LocalStrategy = require('passport-local').Strategy;
 
-var DBServer = mongo.Server,
-  Db = mongo.Db,
-  BSON = mongo.BSONPure;
 
 var SERVER = {
   host: 'localhost',
   port: 8888
 };
-
-
-var server = new DBServer('localhost', 27017, {safe:false}),
-    db = new Db('idea_service', server);
-
-db.open(function(err, db) {
-  if(!err) {
-    console.log("Connected to 'idea_service' database");
-    db.collection('users', {strict:true}, function(err, collection) {
-      if (err) {
-        console.log("The 'users' collection doesn't exist, creating ....");
-        populateUsers();
-      }
-    });
-  }
-});
 
 
 var app = express();
@@ -48,7 +32,10 @@ app.configure(function() {
   app.use(express.static(__dirname + '/../../public'));
 });
 
-app.listen(SERVER.port, SERVER.host);
+// environment we are in
+app.set('dbUrl', config.db[app.settings.env]);
+// connect mongoose to the mongo dbUrl
+mongoose.connect(app.get('dbUrl'));
 
 app.get('/', function(req, res) {
   res.render('index', { user: req.user });
@@ -60,21 +47,20 @@ app.get('/login', function(req, res) {
 });
 
 
-app.get('/ideas', ensureAuthenticated, function(req, res) {
-  res.set({'Content-Type': 'application/json'});
-  res.json(
-    {'idea1': 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', 
-     'idea2': 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-     'idea3': 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.'
-    });
-  res.render;
-});
+// JSON api
+
+app.get('/ideas/:user', ensureAuthenticated, api.ideas);
+app.get('/idea/:id', ensureAuthenticated, api.idea);
+app.post('/idea/:user', ensureAuthenticated, api.addIdea);
+app.put('/idea/:id', ensureAuthenticated, api.editIdea);
 
 
 app.post('/login', 
-    passport.authenticate('local', { successRedirect: '/ideas',
-                                     failureRedirect: '/login', 
-                                     failureFlash: true }) 
+    passport.authenticate('local', { failureRedirect: '/login', 
+                                     failureFlash: true }),
+    function(req, res) {
+      res.redirect('/ideas/' + req.body.email);
+    }
 );
 
 
@@ -83,72 +69,51 @@ app.get('/logout', function(req, res) {
   res.redirect('/');
 });
 
+app.get('/users/:username', ensureAuthenticated, function(req, res) {
+  User.findOne({'email': req.params.username}, function(err, usr) {
+    res.send(usr);
+  });
+});
 
+
+var User = require('./models/user').User;
+app.listen(SERVER.port, SERVER.host);
 
 passport.use(new LocalStrategy({
     usernameField: 'email',
     passwordField: 'password'
   },
   function(usernameField, passwordField, done) {
-    process.nextTick(function() {
-      db.collection('users', function(error, collection) {
-        if (!error) {
-          collection.findOne({
-            'email': usernameField,
-            'password': passwordField
-          },  function (err, user) {
-            if (err) {
-              return done(err);
-            }
-            if (!user) {
-              console.log('Unknown user ' + usernameField);
-              return done(null, false, {message:'Unknown user ' + usernameField});
-            }
-            if (user.password != passwordField) {
-              console.log('Invalid password');
-              return done(null, false, {message:'Invalid password'});
-            }
-            return done(null, user);
-          });
-        } else {
-            console.log(5, 'DB error');
-        }
-      });
+    // look up user by email
+    User.findOne({'email': usernameField}, function(err, usr) {
+      if (err) {
+        return done(err, false, { message: 'Error occurred acccessing users collection'});
+      }
+      if (!usr) {
+        console.log('Unknown user ' + usernameField);
+        return done(null, false, {message: 'Unknown user ' + usernameField});
+      }
+      if (usr.password != passwordField) {
+        console.log('Invalid password');
+        return done(null, false, {message: 'Invalid password'});
+      }
+      // found a matching user and password
+      return done(null, usr);
     });
   })
 );
 
 
-
-
 passport.serializeUser(function(user, done) {
-  done(null, user._id);
+  done(null, user.id);
 });
 
 
 passport.deserializeUser(function(id, done) {
-  var o_id = new BSON.ObjectID(id);
-  db.collection("users", function(err, collection) {
-    collection.findOne({_id:o_id}, function(err, user) {
-      done(err, user);
-    });
+  User.findOne({_id: id}, function(err, user) {
+    done(err, user);
   });
 });
-
-
-function findByEmail(email, fn) {
-  db.collection("users", function(err, collection) {
-    collection.find({}, {}, function(err, users) {
-      users.each(function(err, user) {
-        if (user != null && user.email === email) {
-          console.log("found email:"+email);
-          return fn(null, user);
-        }
-      });
-      return fn(null, null);
-    });
-  });
-}
 
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) { return next(); }
