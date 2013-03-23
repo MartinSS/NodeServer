@@ -9,6 +9,12 @@ function IndexCtrl($scope, $http) {
       $scope.ideas = data;
     });
 
+  
+  $http.get('/user').
+    success(function(data, status, headers, config) {
+      $scope.user = data;
+    });
+
 
   $scope.templates =
     [ { name: 'editIdea.html', url: 'partials/editIdea.html'}];
