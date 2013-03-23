@@ -10,6 +10,7 @@
     "mongoose": "3.5.x",
     "passport": "",
     "passport-local": "0.1.x",
-    "util": "0.4.x"
+    "util": "0.4.x",
+    "ejs": "0.8.x"
   }
 }

@@ -1,11 +1,11 @@
 'use strict';
 
 // app level module which depends on filters, services, and directives
-angular.module(('ideaService', ['ideaService.filters', 'ideaService.services', 'ideaService.directives']).
-  config(['$routeProvider', $locationProvider', function($routeProvider, $locationProvider) {
+angular.module('ideaService', ['ideaService.filters', 'ideaService.services', 'ideaService.directives']).
+  config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider) {
     $routeProvider.
       when('/', {
-        templateUrl: 'partials/index',
+        templateUrl: 'index',
         controller: IndexCtrl
       }).
       when('/addIdea', {
@@ -16,8 +16,12 @@ angular.module(('ideaService', ['ideaService.filters', 'ideaService.services', '
         templateUrl: 'partials/editIdea',
         controller: EditIdeaCtrl
       }).
+      when('/idea/:id', {
+        templateUrl: 'partials/showIdea',
+        controlller: ShowIdeaCtrl
+      }).
       otherwise({
         redirectTo: '/'
       });
-    $locationProvider.htmml5Mode(true); 
+    $locationProvider.html5Mode(true); 
   }]);

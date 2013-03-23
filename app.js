@@ -4,8 +4,9 @@ var flash = require('connect-flash'),
     config = require('./config'),
     mongoose = require('mongoose'),
     passport = require('passport'),
+    api = require('./routes/api'),
     util = require('util'),
-    api = require('./routes/api');
+    angularRoutes = require('./routes'),
     LocalStrategy = require('passport-local').Strategy;
 
 
@@ -18,8 +19,9 @@ var SERVER = {
 var app = express();
 
 app.configure(function() {
-  app.set('views', __dirname + '/views');
-  app.set('view engine', 'jade');
+  app.set('views', __dirname + '/public');
+  app.set('view options', {layout: false});
+  app.engine('html', require('ejs').renderFile);
   app.use(express.logger());
   app.use(express.cookieParser());
   app.use(express.bodyParser());
@@ -29,7 +31,7 @@ app.configure(function() {
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(app.router);
-  app.use(express.static(__dirname + '/../../public'));
+  app.use(express.static(__dirname + '/public'));
 });
 
 // environment we are in
@@ -37,46 +39,82 @@ app.set('dbUrl', config.db[app.settings.env]);
 // connect mongoose to the mongo dbUrl
 mongoose.connect(app.get('dbUrl'));
 
-app.get('/', function(req, res) {
-  res.render('index', { user: req.user });
+
+// Angular routes
+// app.get('/:user', ensureAuthenticated, angularRoutes.index);
+app.get('/partials/:name', ensureAuthenticated, angularRoutes.partials);
+
+// REST/JSON api
+app.get('/ideas', ensureAuthenticated, api.ideas);
+app.get('/idea/:id', ensureAuthenticated, api.idea);
+app.post('/idea', ensureAuthenticated, api.addIdea);
+app.put('/idea', ensureAuthenticated, api.editIdea);
+app.get('/user', ensureAuthenticated, api.user);
+app.post('/user', ensureAuthenticated, api.addUser);
+app.put('/user', ensureAuthenticated, api.editUser);
+
+app.get('/', ensureAuthenticated, function(req, res) {
+  res.render('index.html');
+});
+
+app.get('/index', ensureAuthenticated, function(req, res) {
+  res.render('index.html');
+});
+
+app.get('/index.html', ensureAuthenticated, function(req, res) {
+  res.render('index.html');
 });
 
 app.get('/login', function(req, res) {
-  console.log("login called");
-  res.render('login', { user: req.user, message: req.flash('error') } );
+  console.log('get login called');
+  res.render('login.html');
 });
-
-
-// JSON api
-
-app.get('/ideas/:user', ensureAuthenticated, api.ideas);
-app.get('/idea/:id', ensureAuthenticated, api.idea);
-app.post('/idea/:user', ensureAuthenticated, api.addIdea);
-app.put('/idea/:id', ensureAuthenticated, api.editIdea);
-
-
-app.post('/login', 
-    passport.authenticate('local', { failureRedirect: '/login', 
-                                     failureFlash: true }),
-    function(req, res) {
-      res.redirect('/ideas/' + req.body.email);
-    }
-);
 
 
 app.get('/logout', function(req, res) {
   req.logout();
-  res.redirect('/');
+  res.render('index.html');
 });
 
-app.get('/users/:username', ensureAuthenticated, function(req, res) {
-  User.findOne({'email': req.params.username}, function(err, usr) {
-    res.send(usr);
-  });
-});
+// app.get('*', ensureAuthenticated, angularRoutes.index);
 
+app.post('/login', 
+  passport.authenticate('local', { failureRedirect: '/login', 
+                                   failureFlash: true }),
+  function(req, res) {
+    // store the session
+    console.log('storing session:'+req.sessionID);
+    Session.findOne({'ID': req.sessionID}, function(err, session) {
+      if (err) {
+        return done(err, false, { message: 'Error occurred while storing session'});
+      }
+      if (!session) {
+        User.findOne({email: req.body.email}, function(err, usr) {
+          var session = new Session({
+            ID: req.sessionID,
+            givenName: usr.givenName,
+            email: usr.email
+          });
+          session.save(function (err) {
+            if (err) {
+              console.log('error storing session');
+            }
+          });
+        });
+      }
+      else { // session already exists and user is logging in again
+        if ( session.email != req.body.email ) {
+          console.log("attempt to login with another user's session");
+          return done(err, false, { message: 'Error invalid session id'});
+        } 
+      }
+    });
+    res.redirect('/');
+  }
+);
 
 var User = require('./models/user').User;
+var Session = require('./models/session').Session;
 app.listen(SERVER.port, SERVER.host);
 
 passport.use(new LocalStrategy({
@@ -84,6 +122,7 @@ passport.use(new LocalStrategy({
     passwordField: 'password'
   },
   function(usernameField, passwordField, done) {
+    console.log('authenticating email:'+usernameField+' password:'+passwordField);
     // look up user by email
     User.findOne({'email': usernameField}, function(err, usr) {
       if (err) {

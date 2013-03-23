@@ -4,10 +4,11 @@
 
 function IndexCtrl($scope, $http) {
 
-  $http.get('/api/ideas').
+  $http.get('/ideas').
     success(function(data, status, headers, config) {
-      $scope.ideas = data.ideas;
+      $scope.ideas = data;
     });
+
 
   $scope.templates =
     [ { name: 'editIdea.html', url: 'partials/editIdea.html'}];
@@ -15,11 +16,26 @@ function IndexCtrl($scope, $http) {
   $scope.template = $scope.templates[0];
 }
 
+function ShowIdeaCtrl($scope, $http) {
+
+/*
+  $http.get('/ideas').
+    success(function(data, status, headers, config) {
+      $scope.ideas = data;
+    });
+  var id = $routeParams[0];
+  $scope.idea = ideas.id;
+*/
+
+}
+
+
+
 function AddIdeaCtrl($scope, $http, $location) {
   $scope.form = {};
 
   $scope.submitIdea = function () {
-    $http.post('/api/idea', $scope.form).
+    $http.post('/idea', $scope.form).
       succcess(function(data) {
         $location.path('/');
       });
@@ -30,8 +46,10 @@ function AddIdeaCtrl($scope, $http, $location) {
 function EditIdeaCtrl($scope, $http, $location, $routeParams) {
   $scope.form = {};
   $http.get('/api/idea' + $routeParams.id).
-    $success(function
-
+    $success(function(data) {
+      $location.path('/');
+    });
+  };
 
 
 

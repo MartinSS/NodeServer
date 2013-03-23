@@ -12,7 +12,7 @@ border-right:#CCC 1px solid;
 box-shadow:0px 0px 10px 0px #999;
 }
 
-input[type="button"]{
+input[type="submit"]{
 border-radius: 4px;
 margin:5px;
 margin:0 auto;
@@ -39,9 +39,9 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d2dfed', end
 
 }
 
-input[type="button"]:hover{
+input[type="submit"]:hover{
 	cursor:pointer;
 }
-input[type="button"]:active{
+input[type="submit"]:active{
 border:2px inset #09C;
 }
