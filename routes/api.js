@@ -16,7 +16,6 @@ exports.ideas = function (req, res) {
       if (err || !ideas) {
         res.json({message: 'Error accessing ideas'});
       }
-      console.log('returning ideas:'+ideas);
       res.json(ideas);
     });
   });
@@ -29,15 +28,15 @@ exports.ideas = function (req, res) {
 // expects url parameter with id of idea
 // on error returns JSON containing error message
 exports.idea = function (req, res) {
-  Session.find({ID:req.sessionID}, function(err, sess) {
+  Session.findOne({ID:req.sessionID}, function(err, sess) {
     if (err || !sess) {
       res.json({message: 'Error accessing session'});
     }
-    Idea.find( {_id: req.params.id}, function(err, idea) {
+    Idea.findOne( {_id: req.params.id}, function(err, idea) {
       if (err || !idea || idea.userId != sess.email) {
         res.json({message: 'Error accessing idea'});
       }
-      res.json(idea);
+      res.send(idea);
     });
   });
 };
@@ -49,7 +48,7 @@ exports.idea = function (req, res) {
 // on error returns JSON containing error message
 // returns 'Success' message otherwise
 exports.addIdea = function (req, res) {
-  Session.find({ID:req.sessionID}, function(err, sess) {
+  Session.findOne({ID:req.sessionID}, function(err, sess) {
     if (err || !sess) {
       return {message: 'Error accessing session'};
     }
@@ -71,11 +70,11 @@ exports.addIdea = function (req, res) {
 // on error returns JSON containing error message
 // returns 'Success' message otherwise
 exports.editIdea = function (req, res) {
-  Session.find({ID:req.sessionID}, function(err, sess) {
+  Session.findOne({ID:req.sessionID}, function(err, sess) {
     if (err || !sess) {
       res.json({message: 'Error accessing session'});
     }
-    Idea.find({_id: req.params.id}, function(err, idea) {
+    Idea.findOne({_id: req.params.id}, function(err, idea) {
       if (err || !idea || sess.email != idea.userID) {
         res.json({message: 'Error occurred accessing session'});
       }
@@ -94,6 +93,7 @@ exports.editIdea = function (req, res) {
 // handles get /user
 // return profile for user with session
 exports.user = function (req, res) {
+  console.log("called api.user");
   Session.findOne({ID:req.sessionID}, function(err, sess) {
     if (err || !sess) {
       res.json({message: 'Error accessing session'});

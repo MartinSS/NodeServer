@@ -4,35 +4,33 @@
 
 function IndexCtrl($scope, $http) {
 
-  $http.get('/ideas').
+  $http.get('/api/ideas').
     success(function(data, status, headers, config) {
       $scope.ideas = data;
+      if ($scope.ideas.length > 0) {
+        $scope.idea = $scope.ideas[0];
+      }
     });
-
   
-  $http.get('/user').
+  
+  $http.get('/api/user').
     success(function(data, status, headers, config) {
       $scope.user = data;
     });
 
+  $scope.logout = function () {
+    $http.get('/logout');
+    window.location = 'login';
+  }
 
-  $scope.templates =
-    [ { name: 'editIdea.html', url: 'partials/editIdea.html'}];
-
-  $scope.template = $scope.templates[0];
 }
 
-function ShowIdeaCtrl($scope, $http) {
-
-/*
-  $http.get('/ideas').
+function ShowIdeaCtrl($scope, $http, $routeParams) {
+  var url = '/api/idea/'+$routeParams.id;
+  $http.get(url).
     success(function(data, status, headers, config) {
-      $scope.ideas = data;
+      $scope.idea = data;
     });
-  var id = $routeParams[0];
-  $scope.idea = ideas.id;
-*/
-
 }
 
 
@@ -41,7 +39,7 @@ function AddIdeaCtrl($scope, $http, $location) {
   $scope.form = {};
 
   $scope.submitIdea = function () {
-    $http.post('/idea', $scope.form).
+    $http.post('/api/idea', $scope.form).
       succcess(function(data) {
         $location.path('/');
       });

@@ -13,7 +13,9 @@ exports.index = function(req, res) {
 // angular partials
 exports.partials = function (req, res) {
   var name = req.params.name;
-  res.render('partials/' + name );
+  console.log('called render partial with name:'+name);
+  // res.render('partials/' + name );
+  res.render('login');
 };
 
 

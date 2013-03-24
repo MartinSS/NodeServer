@@ -12,7 +12,8 @@ src: url('fonts/Aaargh.ttf'),
 } 
 
 div#container{
-width:90%;
+width:99% ;
+min-width:600px;
 margin:0 auto;
 border:1px dotted #CCC;
 }
@@ -35,9 +36,11 @@ display:inline;
 position:relative;
 top:-75px;}
 
+
 aside.main{
-width:200px;
-min-height:600px;
+min-width:120px;
+width:10%;
+min-height:400px;
 border:1px solid #FF0;
 float:left;
 }
@@ -45,20 +48,25 @@ float:left;
 .clear{clear:both;}
 
 section{
-margin-left:100px;
-padding:10px;
-width:600px;
+width:60%;
+margin-left:10%;
 height:600px;
 border:1px solid #CDCDCD;
 float:left;
+   border-radius:2px;
 }
+
+
 
 section textarea{
 	font-align:justify;
-	min-width:400px;
+  width:99%;
+    margin:0 auto;
 	min-height:300px;
-	border:#09F 1px solid;}
-	
+	border:#09F 2px double;
+border-radius:10px;}
+
+section.inserted h3{text-align:center;}
 textarea + button{
 padding:5px;
 border:2px outset #000;
@@ -124,11 +132,10 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e2e2e2', end
 
 
 button.createNew{
-	position:relative;
-	left:50px;
-	top:5px;
+
 border-radius: 6px;
-margin:0 auto;
+margin-left:10px;
+margin-top:5px;
 height:30px;
 border:2px outset #09C;
 color:#000;
@@ -182,3 +189,10 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cedce7', end
 }
 
 button:hover{cursor:pointer;}
+
+#content-wrapper{
+  width:600px;
+    margin:0 auto;
+  border:#00A000 1px solid;
+  box-shadow:0px 5px 10px 0px #CCC;
+}

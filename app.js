@@ -4,9 +4,9 @@ var flash = require('connect-flash'),
     config = require('./config'),
     mongoose = require('mongoose'),
     passport = require('passport'),
-    api = require('./routes/api'),
     util = require('util'),
-    angularRoutes = require('./routes'),
+    routes = require('./routes'),
+    api = require('./routes/api'),
     LocalStrategy = require('passport-local').Strategy;
 
 
@@ -19,9 +19,9 @@ var SERVER = {
 var app = express();
 
 app.configure(function() {
-  app.set('views', __dirname + '/public');
-  app.set('view options', {layout: false});
+  app.set('views', __dirname + '/views'); 
   app.engine('html', require('ejs').renderFile);
+  app.set('view options', {layout: false});
   app.use(express.logger());
   app.use(express.cookieParser());
   app.use(express.bodyParser());
@@ -34,49 +34,53 @@ app.configure(function() {
   app.use(express.static(__dirname + '/public'));
 });
 
+app.configure('development', function() {
+  app.use(express.errorHandler({ dumpExceptions: true, showStack: true}));
+});
+
 // environment we are in
 app.set('dbUrl', config.db[app.settings.env]);
 // connect mongoose to the mongo dbUrl
 mongoose.connect(app.get('dbUrl'));
 
 
-// Angular routes
-// app.get('/:user', ensureAuthenticated, angularRoutes.index);
-app.get('/partials/:name', ensureAuthenticated, angularRoutes.partials);
-
-// REST/JSON api
-app.get('/ideas', ensureAuthenticated, api.ideas);
-app.get('/idea/:id', ensureAuthenticated, api.idea);
-app.post('/idea', ensureAuthenticated, api.addIdea);
-app.put('/idea', ensureAuthenticated, api.editIdea);
-app.get('/user', ensureAuthenticated, api.user);
-app.post('/user', ensureAuthenticated, api.addUser);
-app.put('/user', ensureAuthenticated, api.editUser);
-
+// routes
+// app.get('/',  routes.index);
 app.get('/', ensureAuthenticated, function(req, res) {
   res.render('index.html');
 });
 
-app.get('/index', ensureAuthenticated, function(req, res) {
-  res.render('index.html');
+
+//app.get('/partials/:name',  routes.partials);
+app.get('/partials/:name', ensureAuthenticated, function(req, res) {
+  var name = req.params.name;
+  res.render('partials/'+name+'.html');
 });
 
-app.get('/index.html', ensureAuthenticated, function(req, res) {
-  res.render('index.html');
-});
+// REST/JSON api
+app.get('/api/ideas', ensureAuthenticated,  api.ideas);
+app.get('/api/idea/:id', ensureAuthenticated,  api.idea);
+app.post('/api/idea', ensureAuthenticated,  api.addIdea);
+app.put('/api/idea',  ensureAuthenticated, api.editIdea);
+app.get('/api/user', ensureAuthenticated,  api.user);
+app.post('/api/user',  ensureAuthenticated, api.addUser);
+app.put('/api/user',  ensureAuthenticated, api.editUser);
+
 
 app.get('/login', function(req, res) {
   console.log('get login called');
   res.render('login.html');
 });
 
-
 app.get('/logout', function(req, res) {
   req.logout();
-  res.render('index.html');
+  res.render('login.html');
 });
 
-// app.get('*', ensureAuthenticated, angularRoutes.index);
+
+// redirect all others to the index (HTML5 history)
+// app.get('*', routes.index);
+
 
 app.post('/login', 
   passport.authenticate('local', { failureRedirect: '/login', 

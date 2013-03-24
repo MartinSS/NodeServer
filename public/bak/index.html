@@ -1,0 +1,43 @@
+<!DOCTYPE HTML>
+<html ng-app="ideaService">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="description" content="CoIdeate. The most versatile idea capturing app! Unleash your creative potential, share, organize and build ideas that change your life and the world."> 
+<title>Coideate | Capturing Ideas | San Francisco, CA</title>
+<link rel="stylesheet" href="css/main.css" type="text/css" media="screen" />
+<!-- <script src="http://code.angularjs.org/1.0.5/angular.min.js"></script> -->
+</head>
+
+<body ng-controller="IndexCtrl">
+
+<div id="container"> 
+    <header>
+      <a class="index" href="index.html"></a>
+      <div id="user"><p>Welcome, {{ user.givenName }} | <a href="#">My Profile      </a></p></div>
+     </header>
+<aside class="main">
+<button class="createNew">New Idea</button>
+<nav>
+  <ul>
+    <li ng-repeat="idea in ideas">
+      <a href="/idea/{{idea._id}}" >{{idea.name }}</a>
+    </li>
+  </ul>
+</nav>
+</aside>
+
+<div ng-view></div>
+<hr />
+
+<footer>All rights reserved. &copy; CoIdeate, San Francisco, CA. <a href="login.html">Login Page</a></footer>
+
+</div><!--end div# container-->
+
+<script src="lib/angular/angular.js"></script>
+<script src="js/app.js"></script>
+<script src="js/services.js"></script>
+<script src="js/controllers.js"></script>
+<script src="js/filters.js"></script>
+<script src="js/directives.js"></script>
+</body>
+</html>
