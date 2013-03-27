@@ -1,7 +1,5 @@
 /*
-
   Routes used by angular
-
 */
 
 // home page
@@ -14,8 +12,8 @@ exports.index = function(req, res) {
 exports.partials = function (req, res) {
   var name = req.params.name;
   console.log('called render partial with name:'+name);
-  // res.render('partials/' + name );
-  res.render('login');
+  res.render('partials/' + name );
+  // res.render('login');
 };
 
 
