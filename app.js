@@ -1,12 +1,12 @@
-var flash = require('connect-flash'),
-    express = require('express'),
+var express = require('express'),
     mongo = require('mongodb'),
     config = require('./config'),
     mongoose = require('mongoose'),
     passport = require('passport'),
     util = require('util'),
     routes = require('./routes'),
-    api = require('./routes/api'),
+    userController = require('./controllers/user_controller.js'),
+    ideaController = require('./controllers/idea_controller.js'),
     LocalStrategy = require('passport-local').Strategy;
 
 
@@ -16,7 +16,7 @@ var SERVER = {
 };
 
 
-var app = express();
+var app = module.exports = express();
 
 app.configure(function() {
   app.set('views', __dirname + '/views'); 
@@ -27,7 +27,6 @@ app.configure(function() {
   app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(express.session({ secret: 'purple cow' }));
-  app.use(flash());
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(app.router);
@@ -43,28 +42,29 @@ app.set('dbUrl', config.db[app.settings.env]);
 // connect mongoose to the mongo dbUrl
 mongoose.connect(app.get('dbUrl'));
 
-
+     //remove
 // routes
 // app.get('/',  routes.index);
 app.get('/', ensureAuthenticated, function(req, res) {
   res.render('index.html');
 });
 
-
+ // do in angular
 //app.get('/partials/:name',  routes.partials);
 app.get('/partials/:name', ensureAuthenticated, function(req, res) {
   var name = req.params.name;
   res.render('partials/'+name+'.html');
 });
 
+
 // REST/JSON api
-app.get('/api/ideas', ensureAuthenticated,  api.ideas);
-app.get('/api/idea/:id', ensureAuthenticated,  api.idea);
-app.post('/api/idea', ensureAuthenticated,  api.addIdea);
-app.put('/api/idea',  ensureAuthenticated, api.editIdea);
-app.get('/api/user', ensureAuthenticated,  api.user);
-app.post('/api/user',  ensureAuthenticated, api.addUser);
-app.put('/api/user',  ensureAuthenticated, api.editUser);
+app.get('/api/ideas', ensureAuthenticated,  ideaController.ideas);
+app.get('/api/idea/:id', ensureAuthenticated,  ideaController.idea);
+app.post('/api/idea', ensureAuthenticated,  ideaController.addIdea);
+app.put('/api/idea',  ensureAuthenticated, ideaController.editIdea);
+app.get('/api/user', ensureAuthenticated,  userController.user);
+app.post('/api/user',  ensureAuthenticated, userController.addUser);
+app.put('/api/user',  ensureAuthenticated, userController.editUser);
 
 
 app.get('/login', function(req, res) {
@@ -73,8 +73,9 @@ app.get('/login', function(req, res) {
 });
 
 app.get('/logout', function(req, res) {
+  console.log('get logout called');
   req.logout();
-  res.render('login.html');
+  res.redirect('/login');
 });
 
 
@@ -84,7 +85,7 @@ app.get('/logout', function(req, res) {
 
 app.post('/login', 
   passport.authenticate('local', { failureRedirect: '/login', 
-                                   failureFlash: true }),
+                                   failureFlash: false }),
   function(req, res) {
     // store the session
     console.log('storing session:'+req.sessionID);
@@ -189,4 +190,3 @@ var populateUsers = function() {
 
 };
 
-module.exports = app;
