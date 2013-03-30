@@ -4,20 +4,26 @@
 angular.module('ideaService', ['ideaService.filters', 'ideaService.services', 'ideaService.directives']).
   config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider) {
     $routeProvider.
+    /*
       when('/', {
-        templateUrl: '/partials/showIdea',
-        controller: ShowIdeaCtrl
+        templateUrl: 'index',
+        controller: IndexCtrl
       }).
+      when('/index', {
+        templateUrl: 'index',
+        controller: IndexCtrl
+      }).
+      */
       when('/addIdea', {
-        templateUrl: '/partials/addIdea',
+        templateUrl: 'partials/addIdea',
         controller: AddIdeaCtrl
       }).
       when('/editIdea/:id', {
-        templateUrl: '/partials/editIdea',
+        templateUrl: 'partials/editIdea',
         controller: EditIdeaCtrl
       }).
       when('/idea/:id', {
-        templateUrl: '/partials/showIdea',
+        templateUrl: 'partials/showIdea',
         controller: ShowIdeaCtrl
       }).
       when('logout', {
@@ -25,7 +31,7 @@ angular.module('ideaService', ['ideaService.filters', 'ideaService.services', 'i
       }).
       otherwise({
         // redirectTo: '/'
-        templateUrl: '/partials/showIdea',
       });
     $locationProvider.html5Mode(true); 
   }]);
+

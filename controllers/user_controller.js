@@ -10,15 +10,18 @@ exports.user = function (req, res) {
   Session.findOne({ID:req.sessionID}, function(err, sess) {
     if (err || !sess) {
       res.json({message: 'Error accessing session'});
+    } else {
+      User.findOne({email: sess.email}, function(err, usr) {
+        if (err || !usr) {
+          res.json({message: 'Error accessing user'});
+        } else {
+          res.json(usr);
+        }
+      });
     }
-    User.findOne({email: sess.email}, function(err, usr) {
-      if (err || !usr) {
-        res.json({message: 'Error accessing user'});
-      }
-      res.json(usr);
-    });
   });
 };
+
 
 
 // handles post /user
@@ -42,17 +45,19 @@ exports.editUser = function (req, res) {
   Session.find({ID:req.sessionID}, function(err, sess) {
     if (err || !sess) {
       res.json({message: 'Error accessing session'});
+    } else {
+      User.findOne({email: req.params.id}, function(err, usr) {
+        if (err || !usr || sess.email != usr.email) {
+          res.json({message: 'Error accessing user'});
+        } else {
+          usr.givenName = req.body.givenName;
+          usr.familyName = req.body.familyName;
+          usr.password = req.body.password;
+          usr.save();
+          res.json({message: 'Success'}); 
+        }
+      });
     }
-    User.findOne({email: req.params.id}, function(err, usr) {
-      if (err || !usr || sess.email != usr.email) {
-        res.json({message: 'Error accessing user'});
-      }
-      usr.givenName = req.body.givenName;
-      usr.familyName = req.body.familyName;
-      usr.password = req.body.password;
-      usr.save();
-      res.json({message: 'Success'}); 
-    });
   });
 };
 

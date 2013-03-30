@@ -11,7 +11,7 @@
 
 <div id="container"> 
     <header>
-    <a class="index" href="index.html"></a>
+      <a class="index" href="index.html"></a>
       <div id="user"><p>Welcome, {{ user.givenName }} | <a href="#">My Profile</a> | <a ng-click="logout()">Logout</a></p></div> 
      </header>
 <div id="content-wrapper">
@@ -21,7 +21,7 @@
 <nav>
   <ul>
     <li ng-repeat="idea in ideas">
-      <a href="/idea/{{idea._id}}" >{{idea.name }}</a>
+      <a href="#/idea/{{idea._id}}" >{{idea.name }}</a>
     </li>
   </ul>
 </nav>
@@ -30,15 +30,16 @@
 
     <div class="clear"></div>
 </div><!-- end div# content-wrapper -->
-
+me too
+<!-- {{save}} -->
 
 <footer>All rights reserved. &copy; CoIdeate, San Francisco, CA. </footer>
 
 
 </div><!--end div# container-->
 
-<!-- <script src="lib/angular/angular.js"></script>  -->
-<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.5/angular.min.js"></script>
+<script src="lib/angular/angular.js"></script> 
+<!-- <script src="http://code.angularjs.org/1.0.5/angular.min.js"></script> -->
 <script src="js/app.js"></script>
 <script src="js/services.js"></script>
 <script src="js/controllers.js"></script>

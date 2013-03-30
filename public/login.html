@@ -1,0 +1,36 @@
+<!DOCTYPE HTML>
+<html ng-app="ideaService">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Coideate | Log In</title>
+<link rel="stylesheet" href="css/login.css" media="screen" />
+<link rel="stylesheet" href="css/main.css" />
+</head>
+
+<body>
+<div id="containerLogin">
+<img src="img/Co-Ideate_Logo-logIn.png" width="416" height="83" alt="coideate, idea capturing app" />
+
+<form action="/login" method="post" enctype="application/x-www-form-urlencoded">
+<p><strong>User ID</strong><br />
+<input type="text" name="email" /></p>
+
+<p><strong>Password</strong><br />
+<input type="password" name="password" /></p>
+
+<p><input type="submit" value="Log In" class="login" /></p>
+
+</form>
+
+<p><a href="#">Register</a>
+</div>
+
+<script src="js/lib/angular/angular.js" />
+<script src="js/app.js" />
+<script src="js/services.js" />
+<script src="js/controllers.js" />
+<script src="js/filters.js" />
+<script src="js/directives.js" />
+
+</body>
+</html>

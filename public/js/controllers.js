@@ -2,8 +2,34 @@
 
 /* Controllers */
 
+function LoginCtrl($scope, $http, $location, $window) {
+
+  $scope.user = {};
+  $scope.login = function () {
+    console.log("posting email:"+$scope.user.email+", password:"+$scope.user.password);
+    $http.post('/login', $scope.user).success(function(data) {
+      if (data.status) {
+        console.log("login successful");
+        $location.path('/index');
+        $window.location.href = '/index';
+      } 
+      else {
+        $location.path('/login2');
+      }
+    }).error(function(data) {
+      console.log("error posting login credentials"); 
+      $location.path('/login2');
+    });
+  }
+
+}
+
+
+
+
 function IndexCtrl($scope, $http) {
 
+    console.log('in IndexCtrl');
   $http.get('/api/ideas').
     success(function(data, status, headers, config) {
       $scope.ideas = data;
@@ -18,6 +44,8 @@ function IndexCtrl($scope, $http) {
       $scope.user = data;
     });
 
+  console.log("in index controller");
+
   $scope.logout = function () {
     $http.get('/logout');
     window.location = 'login';
@@ -27,6 +55,7 @@ function IndexCtrl($scope, $http) {
 
 function ShowIdeaCtrl($scope, $http, $routeParams) {
   var url = '/api/idea/'+$routeParams.id;
+  console.log('in ShowIdeaCtrl getting:'+url);
   $http.get(url).
     success(function(data, status, headers, config) {
       $scope.idea = data;

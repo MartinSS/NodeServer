@@ -4,6 +4,7 @@
 
 // home page
 exports.index = function(req, res) {
+    console.log('in exports.index');
   res.render('index' );
 };
 

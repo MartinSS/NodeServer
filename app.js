@@ -45,16 +45,24 @@ mongoose.connect(app.get('dbUrl'));
      //remove
 // routes
 // app.get('/',  routes.index);
-app.get('/', ensureAuthenticated, function(req, res) {
+app.get('/', function(req, res) {
+  console.log("called '/'");
+  res.render('login2.html');
+});
+
+app.get('/index', ensureAuthenticated, function(req, res) {
+  console.log("called index");
   res.render('index.html');
 });
 
  // do in angular
 //app.get('/partials/:name',  routes.partials);
+/*
 app.get('/partials/:name', ensureAuthenticated, function(req, res) {
   var name = req.params.name;
   res.render('partials/'+name+'.html');
 });
+*/
 
 
 // REST/JSON api
@@ -66,11 +74,12 @@ app.get('/api/user', ensureAuthenticated,  userController.user);
 app.post('/api/user',  ensureAuthenticated, userController.addUser);
 app.put('/api/user',  ensureAuthenticated, userController.editUser);
 
-
+/*
 app.get('/login', function(req, res) {
   console.log('get login called');
   res.render('login.html');
 });
+*/
 
 app.get('/logout', function(req, res) {
   console.log('get logout called');
@@ -91,9 +100,9 @@ app.post('/login',
     console.log('storing session:'+req.sessionID);
     Session.findOne({'ID': req.sessionID}, function(err, session) {
       if (err) {
-        return done(err, false, { message: 'Error occurred while storing session'});
-      }
-      if (!session) {
+        console.log("error 1");
+        res.json({status: false, message: 'Error occurred while retrieving session'});
+      } else if (!session) {
         User.findOne({email: req.body.email}, function(err, usr) {
           var session = new Session({
             ID: req.sessionID,
@@ -102,7 +111,8 @@ app.post('/login',
           });
           session.save(function (err) {
             if (err) {
-              console.log('error storing session');
+              console.log("error 2");
+              res.json({ status: false, message: 'Error occurred while storing session'});
             }
           });
         });
@@ -110,11 +120,13 @@ app.post('/login',
       else { // session already exists and user is logging in again
         if ( session.email != req.body.email ) {
           console.log("attempt to login with another user's session");
-          return done(err, false, { message: 'Error invalid session id'});
+          res.json({ status: false, message: 'Error invalid session id'});
         } 
       }
     });
-    res.redirect('/');
+    
+    console.log("returning login status success");
+    res.json({status:true});
   }
 );
 
