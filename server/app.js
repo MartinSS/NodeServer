@@ -8,19 +8,17 @@ var express = require('express'),
     ideaController = require('./controllers/idea_controller.js'),
     LocalStrategy = require('passport-local').Strategy;
 
-
+// server configuration
 var SERVER = {
   host: 'localhost',
   port: 8888
 };
 
-
 var app = module.exports = express();
+var User = require('./models/user').User;
+var Session = require('./models/session').Session;
 
 app.configure(function() {
-  app.set('views', __dirname + '/views'); 
-  app.engine('html', require('ejs').renderFile);
-  app.set('view options', {layout: false});
   app.use(express.logger());
   app.use(express.cookieParser());
   app.use(express.bodyParser());
@@ -29,42 +27,23 @@ app.configure(function() {
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(app.router);
-  app.use(express.static(__dirname + '/public'));
 });
 
 app.configure('development', function() {
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true}));
 });
 
-// environment we are in
+// set database environment and connect
 app.set('dbUrl', config.db[app.settings.env]);
-// connect mongoose to the mongo dbUrl
 mongoose.connect(app.get('dbUrl'));
 
-     //remove
-// routes
-// app.get('/',  routes.index);
+// index, we're not rendering and have no endpoint on the root
 app.get('/', function(req, res) {
   console.log("called '/'");
-  res.render('login2.html');
+  res.json({"success":true, "message":"server is working"});
 });
 
-app.get('/index', ensureAuthenticated, function(req, res) {
-  console.log("called index");
-  res.render('index.html');
-});
-
- // do in angular
-//app.get('/partials/:name',  routes.partials);
-/*
-app.get('/partials/:name', ensureAuthenticated, function(req, res) {
-  var name = req.params.name;
-  res.render('partials/'+name+'.html');
-});
-*/
-
-
-// REST/JSON api
+// REST/JSON api endpoint declaration
 app.get('/api/ideas', ensureAuthenticated,  ideaController.ideas);
 app.get('/api/idea/:id', ensureAuthenticated,  ideaController.idea);
 app.post('/api/idea', ensureAuthenticated,  ideaController.addIdea);
@@ -73,24 +52,7 @@ app.get('/api/user', ensureAuthenticated,  userController.user);
 app.post('/api/user',  ensureAuthenticated, userController.addUser);
 app.put('/api/user',  ensureAuthenticated, userController.editUser);
 
-/*
-app.get('/login', function(req, res) {
-  console.log('get login called');
-  res.render('login.html');
-});
-*/
-
-app.get('/logout', function(req, res) {
-  console.log('get logout called');
-  req.logout();
-  res.redirect('/login');
-});
-
-
-// redirect all others to the index (HTML5 history)
-// app.get('*', routes.index);
-
-
+// login a user
 app.post('/login', 
   passport.authenticate('local', { failureRedirect: '/login', 
                                    failureFlash: false }),
@@ -129,9 +91,14 @@ app.post('/login',
   }
 );
 
-var User = require('./models/user').User;
-var Session = require('./models/session').Session;
-app.listen(SERVER.port, SERVER.host);
+// log out a user
+app.get('/logout', function(req, res) {
+  console.log('get logout called');
+  req.logout();
+  res.redirect('/login');
+});
+
+// PASSPORT //
 
 passport.use(new LocalStrategy({
     usernameField: 'email',
@@ -170,6 +137,13 @@ passport.deserializeUser(function(id, done) {
   });
 });
 
+
+// BOOT THE SERVER //
+app.listen(SERVER.port, SERVER.host);
+console.log("server started on " + SERVER.host + ":" + SERVER.port);
+
+
+// OTHER METHODS //
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) { return next(); }
   res.redirect('/login');

@@ -8,8 +8,7 @@
     "mongodb": "1.2.x",
     "mongoose": "3.5.x",
     "passport": "",
-    "passport-local": "0.1.x",
-    "ejs": "0.8.x"
+    "passport-local": "0.1.x"
   },
     "devDependencies": {
     "mocha": "1.8.x",
