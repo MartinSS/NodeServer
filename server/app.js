@@ -4,7 +4,6 @@ var express = require('express'),
     mongoose = require('mongoose'),
     passport = require('passport'),
     util = require('util'),
-    routes = require('./routes'),
     userController = require('./controllers/user_controller.js'),
     ideaController = require('./controllers/idea_controller.js'),
     LocalStrategy = require('passport-local').Strategy;
