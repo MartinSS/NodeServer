@@ -53,10 +53,8 @@ app.post('/api/user',  ensureAuthenticated, userController.addUser);
 app.put('/api/user',  ensureAuthenticated, userController.editUser);
 
 // login a user
-app.post('/login', 
-  passport.authenticate('local', { failureRedirect: '/login', 
-                                   failureFlash: false }),
-  function(req, res) {
+app.post('/login', passport.authenticate('local'), function(req, res)
+{
     // store the session
     console.log('storing session:'+req.sessionID);
     Session.findOne({'ID': req.sessionID}, function(err, session) {
@@ -87,7 +85,7 @@ app.post('/login',
     });
     
     console.log("returning login status success");
-    res.json({status:true});
+    res.json( { "status" : true, "message" : "login succesful", "sessionID" : req.sessionID  } );
   }
 );
 
@@ -95,7 +93,7 @@ app.post('/login',
 app.get('/logout', function(req, res) {
   console.log('get logout called');
   req.logout();
-  res.redirect('/login');
+  res.json( { "success" : true , "message" : "successfully logged out" } );
 });
 
 // PASSPORT //
@@ -144,9 +142,13 @@ console.log("server started on " + SERVER.host + ":" + SERVER.port);
 
 
 // OTHER METHODS //
-function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) { return next(); }
-  res.redirect('/login');
+function ensureAuthenticated(req, res, next)
+{
+  if (req.isAuthenticated())
+  {
+    return next(); 
+  }
+  res.json( {"success" : false, "message" : "user not authenticated" } );
 }
 
 

@@ -7,7 +7,9 @@ var User = require('../models/user').User;
 // handles get /ideas
 // return all ideas for user with session
 // on error returns JSON containing error message
+// curl request with cookie set returned by /login: curl -v --cookie "connect.sid=s%3ANM7ESUG23zCuhiEMlXE%2BSgju.WQkr7LTf5Lp3LflLDUskdKNcoWOeLQgMxvUkGYSQMqM; Path=/;" localhost:8888/api/ideas
 exports.ideas = function (req, res) {
+  console.log("request" + req);
   Session.findOne({ID:req.sessionID}, function(err, sess) {
     if (err || !sess) {
       res.json({message: 'Error accessing session'});
