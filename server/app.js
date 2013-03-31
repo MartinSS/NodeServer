@@ -52,6 +52,9 @@ app.get('/api/user', ensureAuthenticated,  userController.user);
 app.post('/api/user',  ensureAuthenticated, userController.addUser);
 app.put('/api/user',  ensureAuthenticated, userController.editUser);
 
+// poc cascading router
+// app.get('/v1/idea/*', ensureAuthenticated,  ideaController.route);
+
 // login a user
 app.post('/login', passport.authenticate('local'), function(req, res)
 {

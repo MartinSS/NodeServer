@@ -2,6 +2,13 @@ var Idea = require('../models/idea').Idea;
 var Session = require('../models/session').Session;
 var User = require('../models/user').User;
 
+// receive a reqeust for /v1/idea/*
+// this controller does the mapping to it's internal functions
+// -> /v1/idea/getIdeas ---> ideas function
+
+// exports.route = function(req, res) {
+  // map the path -> getIdeas -> to the appropriate function
+// };
 
 // handles get /ideas
 // return all ideas for user with session
