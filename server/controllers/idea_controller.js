@@ -1,4 +1,3 @@
-var mongoose = require('mongoose');
 var Idea = require('../models/idea').Idea;
 var Session = require('../models/session').Session;
 var User = require('../models/user').User;

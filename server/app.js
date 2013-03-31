@@ -92,6 +92,7 @@ app.post('/login', passport.authenticate('local'), function(req, res)
 // log out a user
 app.get('/logout', function(req, res) {
   console.log('get logout called');
+  console.log('session id ' + req.sessionID);
   req.logout();
   res.json( { "success" : true , "message" : "successfully logged out" } );
 });
