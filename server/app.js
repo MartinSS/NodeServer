@@ -4,8 +4,8 @@ var express = require('express'),
   mongoose = require('mongoose'),
   passport = require('passport'),
   util = require('util'),
-  userController = require('./controllers/user_controller.js'),
-  ideaController = require('./controllers/idea_controller.js'),
+  userController = require('./controllers/UserController.js'),
+  ideaController = require('./controllers/IdeaController.js'),
   LocalStrategy = require('passport-local').Strategy;
 
 // server configuration
@@ -17,6 +17,7 @@ var SERVER = {
 var app = module.exports = express();
 var User = require('./models/user').User;
 var Session = require('./models/session').Session;
+// var Idea = require('./models/idea').Idea;
 
 app.configure(function()
 {
@@ -58,13 +59,15 @@ app.get('/', function(req, res)
 });
 
 // REST/JSON api endpoint declaration
-app.get('/api/ideas', ensureAuthenticated, ideaController.ideas);
-app.get('/api/idea/:id', ensureAuthenticated, ideaController.idea);
+
+app.get('/api/ideas', ensureAuthenticated, ideaController.getIdeas);
+app.get('/api/idea/:id', ensureAuthenticated, ideaController.getIdea);
 app.post('/api/idea', ensureAuthenticated, ideaController.addIdea);
 app.put('/api/idea', ensureAuthenticated, ideaController.editIdea);
-app.get('/api/user', ensureAuthenticated, userController.user);
-app.post('/api/user', ensureAuthenticated, userController.addUser);
+app.get('/api/user', ensureAuthenticated, userController.getUser);
+app.post('/api/user', userController.addUser);
 app.put('/api/user', ensureAuthenticated, userController.editUser);
+
 
 // poc cascading router
 // app.get('/v1/idea/*', ensureAuthenticated,  ideaController.route);
