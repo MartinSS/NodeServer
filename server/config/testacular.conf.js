@@ -8,14 +8,13 @@ basePath = '../';
 
 // list of files / patterns to load in the browser
 files = [
-  JASMINE,
-  JASMINE_ADAPTER,
+JASMINE,
+JASMINE_ADAPTER,
   'public/lib/angular/angular.js',
   'public/lib/angular/angular-*.js',
   'test/client/lib/angular/angular-mocks.js',
-  'public/js/*.js', 
-  'test/client/unit/*.js'
-];
+  'public/js/*.js',
+  'test/client/unit/*.js'];
 
 autoWatch = true;
 
@@ -23,8 +22,7 @@ autoWatch = true;
 exclude = [
   '*.swp',
   '../public/js/*.swp',
-  '**/*.swp'
-];
+  '**/*.swp'];
 
 
 // test results reporter to use
