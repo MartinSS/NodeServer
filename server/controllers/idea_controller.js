@@ -1,6 +1,4 @@
 var Idea = require('../models/idea').Idea;
-var Session = require('../models/session').Session;
-var User = require('../models/user').User;
 
 // receive a reqeust for /v1/idea/*
 // this controller does the mapping to it's internal functions
@@ -16,17 +14,11 @@ var User = require('../models/user').User;
 // curl request with cookie set returned by /login: curl -v --cookie "connect.sid=s%3ANM7ESUG23zCuhiEMlXE%2BSgju.WQkr7LTf5Lp3LflLDUskdKNcoWOeLQgMxvUkGYSQMqM; Path=/;" localhost:8888/api/ideas
 exports.ideas = function (req, res) {
   console.log("request" + req);
-  Session.findOne({ID:req.sessionID}, function(err, sess) {
-    if (err || !sess) {
-      res.json({message: 'Error accessing session'});
+  Idea.find( {userId: req.user.email}, function(err, ideas) {
+    if (err || !ideas) {
+      res.json({message: 'Error accessing ideas'});
     } else {
-      Idea.find( {userId: sess.email}, function(err, ideas) {
-        if (err || !ideas) {
-          res.json({message: 'Error accessing ideas'});
-        } else {
-          res.json(ideas);
-        }
-      });
+      res.json(ideas);
     }
   });
 };
@@ -37,18 +29,13 @@ exports.ideas = function (req, res) {
 // return a given idea with id
 // expects url parameter with id of idea
 // on error returns JSON containing error message
+// curl -b cookies.txt "http://localhost:8888/api/idea/514a8726a967f4f1774f7baf"
 exports.idea = function (req, res) {
-  Session.findOne({ID:req.sessionID}, function(err, sess) {
-    if (err || !sess) {
-      res.json({message: 'Error accessing session'});
+  Idea.findOne( {_id: req.params.id}, function(err, idea) {
+    if (err || !idea || idea.userId != req.user.email) {
+      res.json({message: 'Error accessing idea'});
     } else {
-      Idea.findOne( {_id: req.params.id}, function(err, idea) {
-        if (err || !idea || idea.userId != sess.email) {
-          res.json({message: 'Error accessing idea'});
-        } else {
-          res.json(idea);
-        }
-      });
+      res.json(idea);
     }
   });
 };
@@ -59,19 +46,16 @@ exports.idea = function (req, res) {
 // expects parameters set in body of request with idea data
 // on error returns JSON containing error message
 // returns 'Success' message otherwise
+// can be accesssed with  the following curl command:
+// curl -b cookies.txt -d "ideaName=idea3&ideaContent=consectetur adipisicing elit, sed do eiusmod tempor ncididunt" "http://localhost:8888/api/idea"
+
 exports.addIdea = function (req, res) {
-  Session.findOne({ID:req.sessionID}, function(err, sess) {
-    if (err || !sess) {
-      return {message: 'Error accessing session'};
-    } else {
-      new Idea({
-        name: req.body.ideaName,
-        content: req.body.ideaContent,
-        userId: sess.email}).
-      save( function( err, idea, count) {
-        res.json({message: 'Success'}); 
-      });
-    }
+  new Idea({
+  name: req.body.ideaName,
+    content: req.body.ideaContent,
+    userId: req.user.email}).
+  save( function( err, idea, count) {
+    res.json({message: 'Success'}); 
   });
 };
 
@@ -82,22 +66,18 @@ exports.addIdea = function (req, res) {
 // expects parameters set in body of request with idea data
 // on error returns JSON containing error message
 // returns 'Success' message otherwise
+// url can be hit by e.g. curl -b cookies.txt  -X PUT -d "ideaName=idea4&ideaContent=adipisicing elit, sed do eiusmod tempor inciidunt" "http://localhost:8888/api/idea/5158b50f7a41e34b17000003"
+
 exports.editIdea = function (req, res) {
-  Session.findOne({ID:req.sessionID}, function(err, sess) {
-    if (err || !sess) {
-      res.json({message: 'Error accessing session'});
-    } else  {
-      Idea.findOne({_id: req.params.id}, function(err, idea) {
-        if (err || !idea || sess.email != idea.userID) {
-          res.json({message: 'Error occurred accessing session'});
-        } else {
-          idea.name = req.body.ideaName,
-          idea.content = req.body.ideaContent,
-          idea.save();
-          res.json({message: 'Success'}); 
-        }
-      });
-    }
+  Idea.findOne({_id: req.params.id}, function(err, idea) {
+    if (err || !idea || (req.user.email != idea.userId)) {
+      res.json({message: 'Error occurred accessing session'});
+    } else {
+      idea.name = req.body.ideaName,
+      idea.content = req.body.ideaContent,
+      idea.save();
+      res.json({message: 'Success'}); 
+    } 
   });
 };
 
