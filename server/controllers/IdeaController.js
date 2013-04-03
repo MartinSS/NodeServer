@@ -1,22 +1,13 @@
 var Idea = require('../models/idea').Idea;
 
-module.exports = 
+var ideaController =
 {
-  
-    
-  // receive a reqeust for /v1/idea/*
-  // this controller does the mapping to it's internal functions
-  // -> /v1/idea/getIdeas ---> ideas function
-  
-  // exports.route = function(req, res) {
-  // map the path -> getIdeas -> to the appropriate function
-  // };
   
   // handles get /ideas
   // return all ideas for user with session
   // on error returns JSON containing error message
   // curl request with cookie set returned by /login: curl -v --cookie "connect.sid=s%3ANM7ESUG23zCuhiEMlXE%2BSgju.WQkr7LTf5Lp3LflLDUskdKNcoWOeLQgMxvUkGYSQMqM; Path=/;" localhost:8888/api/ideas
-  getIdeas: function(req, res)
+  getIdeas: function (req, res)
   {
     console.log("request" + req);
     Idea.find(
@@ -43,7 +34,7 @@ module.exports =
   // expects url parameter with id of idea
   // on error returns JSON containing error message
   // curl -b cookies.txt "http://localhost:8888/api/idea/514a8726a967f4f1774f7baf"
-  getIdea: function(req, res)
+  getIdea: function (req, res)
   {
     Idea.findOne(
     {
@@ -72,7 +63,7 @@ module.exports =
   // can be accesssed with  the following curl command:
   // curl -b cookies.txt -d "ideaName=idea3&ideaContent=consectetur adipisicing elit, sed do eiusmod tempor ncididunt" "http://localhost:8888/api/idea"
   
-  addIdea: function(req, res)
+  addIdea: function (req, res)
   {
     new Idea(
     {
@@ -124,3 +115,55 @@ module.exports =
   }
 
 };
+
+    
+  // receive a reqeust for /v1/idea/*
+  // this controller does the mapping to it's internal functions
+  // -> /v1/idea/get ---> getIdeas function
+  // -> /v1/idea/get/ideaId ---> getIdea function
+  // -> /v1/idea/add ---> addIdea function
+  // -> /v1/idea/edit ---> editIdea function
+  // exports.route = function(req, res) {
+  // map the path -> getIdeas -> to the appropriate function
+  // };
+
+  function route(req, res)
+  {
+    if (!(typeof req.params.op === 'undefined')) 
+    {
+      switch (req.params.op)
+      {
+        case 'get':
+          if (typeof req.params.id === 'undefined')
+          {
+            ideaController.getIdeas(req,res);
+          }
+          else
+          {
+            ideaController.getIdea(req,res);
+          }
+          break;
+        case 'add':
+          ideaController.addIdeas(req,res);
+          break;
+        case 'edit':
+          ideaController.editIdea(req,res);
+          break;
+        default:
+          res.json(
+          {
+            message: 'Invalid operation specified'
+          });
+        }
+    }
+    else
+    {
+      res.json(
+      {
+        message: 'No idea operation specified'
+      });
+    }
+  }
+
+
+module.exports.route = route;

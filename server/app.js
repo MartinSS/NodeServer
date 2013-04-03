@@ -6,6 +6,7 @@ var express = require('express'),
   util = require('util'),
   userController = require('./controllers/UserController.js'),
   ideaController = require('./controllers/IdeaController.js'),
+  signupController = require('./controllers/SignupController.js'),
   LocalStrategy = require('passport-local').Strategy;
 
 // server configuration
@@ -17,7 +18,6 @@ var SERVER = {
 var app = module.exports = express();
 var User = require('./models/user').User;
 var Session = require('./models/session').Session;
-// var Idea = require('./models/idea').Idea;
 
 app.configure(function()
 {
@@ -60,23 +60,14 @@ app.get('/', function(req, res)
 
 // REST/JSON api endpoint declaration
 
-app.get('/api/ideas', ensureAuthenticated, ideaController.getIdeas);
-app.get('/api/idea/:id', ensureAuthenticated, ideaController.getIdea);
-app.post('/api/idea', ensureAuthenticated, ideaController.addIdea);
-app.put('/api/idea', ensureAuthenticated, ideaController.editIdea);
-app.get('/api/user', ensureAuthenticated, userController.getUser);
-app.post('/api/user', userController.addUser);
-app.put('/api/user', ensureAuthenticated, userController.editUser);
+app.all('/v1/user/:op', ensureAuthenticated, userController.route);
+app.all('/v1/idea/:op/:id?', ensureAuthenticated, ideaController.route);
+app.all('/v1/signup/:op', signupController.route);
 
-
-// poc cascading router
-// app.get('/v1/idea/*', ensureAuthenticated,  ideaController.route);
 
 // login a user
 app.post('/login', passport.authenticate('local'), function(req, res)
 {
-  // store the session
-  console.log('storing session:' + req.sessionID);
   Session.findOne(
   {
     'ID': req.sessionID
@@ -84,7 +75,6 @@ app.post('/login', passport.authenticate('local'), function(req, res)
   {
     if (err)
     {
-      console.log("error 1");
       res.json(
       {
         status: false,
@@ -108,7 +98,6 @@ app.post('/login', passport.authenticate('local'), function(req, res)
         {
           if (err)
           {
-            console.log("error 2");
             res.json(
             {
               status: false,

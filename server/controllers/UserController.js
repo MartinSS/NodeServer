@@ -1,7 +1,8 @@
 var User = require('../models/user').User;
 
-module.exports =
-{
+
+  var userController =
+  {
 
   // handles get /user
   // return profile for user with session
@@ -84,3 +85,43 @@ module.exports =
   }
 
 };
+
+// module method to channel requests to correct handler of controller
+// handles following urls:
+//    /v1/user/get --> getUser method
+//    /v1/user/edit --> editUser method
+// if no or no known operation is specified, returns json error message 
+//
+
+function route(req, res)
+{
+  if (!(typeof req.params.op === 'undefined'))
+  {
+    switch (req.params.op)
+    {
+      case 'get':
+        userController.getUser(req,res);
+        break;
+      case 'edit':
+        userController.editUser(req,res);
+        break;
+      default:
+        res.json(
+        {
+          message: 'Invalid operation specified'
+        });
+    }
+  }
+  else
+  {
+    res.json(
+    {
+      message: 'No user operation specified'
+    });
+  }
+}
+
+
+module.exports.route = route;
+
+
