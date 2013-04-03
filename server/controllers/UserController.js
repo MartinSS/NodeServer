@@ -1,6 +1,5 @@
 var User = require('../models/user').User;
 
-
   var userController =
   {
 
@@ -29,29 +28,7 @@ var User = require('../models/user').User;
       }
     });
   },
-  
-  // handles post /user
-  // create new profile for user with session
-  // this is a signup
-  // access with through curl by typing for example: 
-  // curl X POST -d "givenName=Brian&familyName=Sonman&password=aaabbb&email=brian@example.com" "http://localhost:8888/api/user"
-  addUser: function(req, res)
-  {
-    new User(
-    {
-      givenName: req.body.givenName,
-      familyName: req.body.familyName,
-      email: req.body.email,
-      password: req.body.password
-    }).save(function(err, idea, count)
-    {
-      res.json(
-      {
-        message: 'Success'
-      });
-    });
-  },
-  
+
   // handles put /user
   // modify profile for user with session
   // access by curl with for example:
