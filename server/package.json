@@ -12,6 +12,9 @@
   },
   "devDependencies": {
     "mocha": "1.8.x",
-    "supertest": "0.5.x"
+    "supertest": "0.5.x",
+    "should": "*",
+    "assert": "*",
+    "expect": "*"
   }
 }
