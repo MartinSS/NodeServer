@@ -1,4 +1,5 @@
-var Idea = require('../models/idea').Idea;
+var Idea = require('../models/idea').Idea,
+    utils = require('../utils');
 
 var ideaController =
 {
@@ -19,6 +20,7 @@ var ideaController =
       {
         res.json(
         {
+          success: false,
           message: 'Error accessing ideas'
         });
       }
@@ -45,6 +47,7 @@ var ideaController =
       {
         res.json(
         {
+          success: false,
           message: 'Error accessing idea'
         });
       }
@@ -67,15 +70,15 @@ var ideaController =
   {
     new Idea(
     {
-      name: req.body.ideaName,
-      content: req.body.ideaContent,
+      name: utils.encodeHTML(req.body.ideaName),
+      content: utils.encodeHTML(req.body.ideaContent),
       userId: req.user.email
     }).
     save(function(err, idea, count)
     {
       res.json(
       {
-        message: 'Success'
+        success: true
       });
     });
   },
@@ -98,17 +101,18 @@ var ideaController =
       {
         res.json(
         {
+          success: false,
           message: 'Error occurred accessing session'
         });
       }
       else
       {
-        idea.name = req.body.ideaName,
-        idea.content = req.body.ideaContent,
+        idea.name = utils.encodeHTML(req.body.ideaName),
+        idea.content = utils.encodeHTML(req.body.ideaContent),
         idea.save();
         res.json(
         {
-          message: 'Success'
+          success: true
         });
       }
     });

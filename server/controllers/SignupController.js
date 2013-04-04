@@ -1,12 +1,5 @@
-var User = require('../models/user').User;
-
-
-// prevent script injection (e.g. XSS) by encoding (sanitizing) HTML sensitive inputs
-// currently encodes &, <, >, and "
-//
-function encodeHTML(s) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+var User = require('../models/user').User
+    utils = require('../utils');
 
 var signupController =
 {
@@ -20,15 +13,15 @@ var signupController =
   {
     new User(
     {
-      givenName: encodeHTML(req.body.givenName),
-      familyName: encodeHTML(req.body.familyName),
-      email: encodeHTML(req.body.email),
+      givenName: tils.encodeHTML(req.body.givenName),
+      familyName: utils.encodeHTML(req.body.familyName),
+      email: utils.encodeHTML(req.body.email),
       password: req.body.password
     }).save(function(err, idea, count)
     {
       res.json(
       {
-        message: 'Success'
+        success: true,
       });
     });
   }
@@ -55,6 +48,7 @@ function route(req, res)
       default:
         res.json(
         {
+          success: false,
           message: 'Invalid operation specified'
         });
     }
@@ -63,6 +57,7 @@ function route(req, res)
   {
     res.json(
     {
+      success: false,
       message: 'No user operation specified'
     });
   }
@@ -70,5 +65,3 @@ function route(req, res)
 
 
 module.exports.route = route;
-
-

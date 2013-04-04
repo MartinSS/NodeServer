@@ -60,9 +60,9 @@ app.get('/', function(req, res)
 
 // REST/JSON api endpoint declaration
 
-app.all('/v1/user/:op', ensureAuthenticated, userController.route);
-app.all('/v1/idea/:op/:id?', ensureAuthenticated, ideaController.route);
-app.all('/v1/signup/:op', signupController.route);
+app.all('/v1/user/:op?', ensureAuthenticated, userController.route);
+app.all('/v1/idea/:op?/:id?', ensureAuthenticated, ideaController.route);
+app.all('/v1/signup/:op?', signupController.route);
 
 
 // login a user
@@ -197,6 +197,7 @@ passport.serializeUser(function(user, done)
 
 passport.deserializeUser(function(id, done)
 {
+  console.log("deserialize user was called");
   User.findOne(
   {
     _id: id

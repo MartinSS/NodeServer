@@ -1,4 +1,6 @@
-var User = require('../models/user').User;
+var User = require('../models/user').User,
+    utils = require('../utils');
+
 
   var userController =
   {
@@ -19,6 +21,7 @@ var User = require('../models/user').User;
       {
         res.json(
         {
+          success: false,
           message: 'Error accessing user'
         });
       }
@@ -44,18 +47,19 @@ var User = require('../models/user').User;
       {
         res.json(
         {
+          success: false,
           message: 'Error accessing user'
         });
       }
       else
       {
-        usr.givenName = req.body.givenName;
-        usr.familyName = req.body.familyName;
+        usr.givenName = utils.encodeHTML(req.body.givenName);
+        usr.familyName = utils.encodeHTML(req.body.familyName);
         usr.password = req.body.password;
         usr.save();
         res.json(
         {
-          message: 'Success'
+          success: true
         });
       }
     });
@@ -85,6 +89,7 @@ function route(req, res)
       default:
         res.json(
         {
+          success: false,
           message: 'Invalid operation specified'
         });
     }
@@ -93,6 +98,7 @@ function route(req, res)
   {
     res.json(
     {
+      success: false,
       message: 'No user operation specified'
     });
   }
