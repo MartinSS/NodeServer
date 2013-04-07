@@ -1,6 +1,8 @@
 var User = require('../models/user').User,
-    utils = require('../utils');
+    utils = require('../utils'),
+    redis = require('redis');
 
+var redisClient = redis.createClient();
 
   var userController =
   {
@@ -11,7 +13,6 @@ var User = require('../models/user').User,
   // curl -b cookies.txt "http://localhost:8888/api/user"
   getUser: function(req, res)
   {
-    console.log("called api.user");
     User.findOne(
     {
       email: req.user.email
@@ -57,6 +58,10 @@ var User = require('../models/user').User,
         usr.familyName = utils.encodeHTML(req.body.familyName);
         usr.password = req.body.password;
         usr.save();
+        // update session cache
+        var userSessionHash = "session:"+usr._id;
+        redisClient.hmset(userSessionHash, "sessionID", req.sessionID, "email", usr.email,
+          "givenName", user.givenName)
         res.json(
         {
           success: true

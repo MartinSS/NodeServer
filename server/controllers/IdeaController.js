@@ -10,7 +10,6 @@ var ideaController =
   // curl request with cookie set returned by /login: curl -v --cookie "connect.sid=s%3ANM7ESUG23zCuhiEMlXE%2BSgju.WQkr7LTf5Lp3LflLDUskdKNcoWOeLQgMxvUkGYSQMqM; Path=/;" localhost:8888/api/ideas
   getIdeas: function (req, res)
   {
-    console.log("request" + req);
     Idea.find(
     {
       userId: req.user.email

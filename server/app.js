@@ -1,7 +1,8 @@
 var express = require('express'),
-  mongo = require('mongodb'),
   config = require('./config'),
+  mongo = require('mongodb'),
   mongoose = require('mongoose'),
+  redis = require('redis'),
   passport = require('passport'),
   util = require('util'),
   userController = require('./controllers/UserController.js'),
@@ -29,6 +30,7 @@ app.configure(function()
   {
     secret: 'purple cow'
   }));
+  // app.use(express.static(__dirname + '/public'));
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(app.router);
@@ -46,11 +48,11 @@ app.configure('development', function()
 // set database environment and connect
 app.set('dbUrl', config.db[app.settings.env]);
 mongoose.connect(app.get('dbUrl'));
+var redisClient = redis.createClient();
 
 // index, we're not rendering and have no endpoint on the root
 app.get('/', function(req, res)
 {
-  console.log("called '/'");
   res.json(
   {
     "success": true,
@@ -68,73 +70,51 @@ app.all('/v1/signup/:op?', signupController.route);
 // login a user
 app.post('/login', passport.authenticate('local'), function(req, res)
 {
-  Session.findOne(
+  User.findOne(
   {
-    'ID': req.sessionID
-  }, function(err, session)
+    email: req.body.email
+  }, function(err, usr)
   {
     if (err)
     {
       res.json(
       {
-        status: false,
-        message: 'Error occurred while retrieving session'
-      });
-    }
-    else if (!session)
-    {
-      User.findOne(
-      {
-        email: req.body.email
-      }, function(err, usr)
-      {
-        var session = new Session(
-        {
-          ID: req.sessionID,
-          givenName: usr.givenName,
-          email: usr.email
-        });
-        session.save(function(err)
-        {
-          if (err)
-          {
-            res.json(
-            {
-              status: false,
-              message: 'Error occurred while storing session'
-            });
-          }
-        });
+        "success": false,
+        "message": "an error occured getting user from mongo"
       });
     }
     else
-    { // session already exists and user is logging in again
-      if (session.email != req.body.email)
+    {
+      var userSessionHash = "session:"+usr._id;
+      redisClient.hmset([userSessionHash, "sessionID", req.sessionID, "email", usr.email, 
+            "givenName", usr.givenName], function(err, usr)
       {
-        console.log("attempt to login with another user's session");
-        res.json(
+        if (err) 
         {
-          status: false,
-          message: 'Error invalid session id'
-        });
-      }
+          res.json(
+          {
+            "success": false,
+            "message": "Error occurred while getting session from session store"
+          });
+        }
+        else
+        {
+          res.json(
+          {
+            "status": true,
+            "message": "login succesful",
+            "sessionID": req.sessionID
+          });
+        }
+      });
     }
   });
-
-  console.log("returning login status success");
-  res.json(
-  {
-    "status": true,
-    "message": "login succesful",
-    "sessionID": req.sessionID
-  });
 });
+
 
 // log out a user
 app.get('/logout', function(req, res)
 {
-  console.log('get logout called');
-  console.log('session id ' + req.sessionID);
   req.logout();
   res.json(
   {
@@ -149,11 +129,8 @@ passport.use(new LocalStrategy(
 {
   usernameField: 'email',
   passwordField: 'password'
-},
-
-function(usernameField, passwordField, done)
+}, function(usernameField, passwordField, done)
 {
-  console.log('authenticating email:' + usernameField + ' password:' + passwordField);
   // look up user by email
   User.findOne(
   {
@@ -167,43 +144,57 @@ function(usernameField, passwordField, done)
         message: 'Error occurred acccessing users collection'
       });
     }
-    if (!usr)
+    else
     {
-      console.log('Unknown user ' + usernameField);
-      return done(null, false,
+      if (!usr)
       {
-        message: 'Unknown user ' + usernameField
-      });
-    }
-    if (usr.password != passwordField)
-    {
-      console.log('Invalid password');
-      return done(null, false,
+        console.log('Unknown user ' + usernameField);
+        return done(null, false,
+        {
+          message: 'Unknown user ' + usernameField
+        });
+      }
+      else if (usr.password != passwordField)
       {
-        message: 'Invalid password'
-      });
+        console.log('Invalid password');
+        return done(null, false,
+        {
+          message: 'Invalid password'
+        });
+      }
+      else  // found a matching user and password
+      {
+        return done(null, usr);
+      }
     }
-    // found a matching user and password
-    return done(null, usr);
   });
 }));
 
 
 passport.serializeUser(function(user, done)
 {
-  done(null, user.id);
+  done(null, user._id);
 });
 
 
 passport.deserializeUser(function(id, done)
 {
-  console.log("deserialize user was called");
-  User.findOne(
+  var userSessionHash = "session:"+id;
+  redisClient.hgetall(userSessionHash, function(err, session)
   {
-    _id: id
-  }, function(err, user)
-  {
-    done(err, user);
+    if (err || !session) 
+    {
+      res.json(
+      {
+        "success": false,
+        "message": "Error occurred while getting session from session store"
+      });
+    }
+    else // no error and session exists
+    { 
+      var user = {email: session.email, givenName: session.givenName};
+      done(err, user);
+    } 
   });
 });
 
@@ -214,7 +205,6 @@ console.log("server started on " + SERVER.host + ":" + SERVER.port);
 
 
 // OTHER METHODS //
-
 function ensureAuthenticated(req, res, next)
 {
   if (req.isAuthenticated())
