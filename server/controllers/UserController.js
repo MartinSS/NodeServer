@@ -3,9 +3,37 @@ var User = require('../models/user').User,
     redis = require('redis');
 
 var redisClient = redis.createClient();
+var signupUrl = "/v1/user/signup";
 
-  var userController =
+var userController =
+{
+
+  // handles post /user
+  // create new profile for user with session
+  // this is a signup
+  // access with through curl by typing for example: 
+  // curl X POST -d "givenName=Brian&familyName=Sonman&password=aaabbb&email=brian@example.com" "http://localhost:8888/v1/user/signup"
+  addUser: function(req, res)
   {
+    if (req.body.givenName!=undefined&&req.body.familyName!=undefined&&req.body.email!=undefined&&req.body.password!=undefined)
+    {
+      new User(
+      {
+        givenName: utils.encodeHTML(req.body.givenName),
+        familyName: utils.encodeHTML(req.body.familyName),
+        email: utils.encodeHTML(req.body.email),
+        password: req.body.password
+      }).save(function(err, idea, count)
+      {
+        res.json(utils.success({}));
+      });
+    }
+    else
+    {
+      res.json(utils.failure('Missing or invalid information given for user signup'));
+    }
+  },
+
 
   // handles get /user
   // return profile for user with session
@@ -20,15 +48,11 @@ var redisClient = redis.createClient();
     {
       if (err || !usr)
       {
-        res.json(
-        {
-          success: false,
-          message: 'Error accessing user'
-        });
+        res.json(utils.failure('Error accessing user'));
       }
       else
       {
-        res.json(usr);
+        res.json(utils.success(usr));
       }
     });
   },
@@ -46,11 +70,7 @@ var redisClient = redis.createClient();
     {
       if (err || !usr || req.user.email != usr.email)
       {
-        res.json(
-        {
-          success: false,
-          message: 'Error accessing user'
-        });
+        res.json(utils.failure('Error accessing user'));
       }
       else
       {
@@ -62,10 +82,7 @@ var redisClient = redis.createClient();
         var userSessionHash = "session:"+usr._id;
         redisClient.hmset(userSessionHash, "sessionID", req.sessionID, "email", usr.email,
           "givenName", user.givenName)
-        res.json(
-        {
-          success: true
-        });
+        res.json(utils.success({}));
       }
     });
   }
@@ -74,6 +91,7 @@ var redisClient = redis.createClient();
 
 // module method to channel requests to correct handler of controller
 // handles following urls:
+//    /v1/user/signup --> addUser method
 //    /v1/user/get --> getUser method
 //    /v1/user/edit --> editUser method
 // if no or no known operation is specified, returns json error message 
@@ -81,6 +99,7 @@ var redisClient = redis.createClient();
 
 function route(req, res)
 {
+  console.log("the request url is:"+req.url);
   if (!(typeof req.params.op === 'undefined'))
   {
     switch (req.params.op)
@@ -92,24 +111,18 @@ function route(req, res)
         userController.editUser(req,res);
         break;
       default:
-        res.json(
-        {
-          success: false,
-          message: 'Invalid operation specified'
-        });
+        res.json(utils.failure('Invalid operation specified'));
     }
+  }
+  else if (req.url == signupUrl) 
+  {
+    userController.addUser(req,res);
   }
   else
   {
-    res.json(
-    {
-      success: false,
-      message: 'No user operation specified'
-    });
+    res.json(utils.failure('No user operation specified'));
   }
 }
 
 
 module.exports.route = route;
-
-

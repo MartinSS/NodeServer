@@ -62,9 +62,10 @@ app.get('/', function(req, res)
 
 // REST/JSON api endpoint declaration
 
+app.all('/v1/user/signup', userController.route);
 app.all('/v1/user/:op?', ensureAuthenticated, userController.route);
 app.all('/v1/idea/:op?/:id?', ensureAuthenticated, ideaController.route);
-app.all('/v1/signup/:op?', signupController.route);
+// app.all('/v1/signup/:op?', signupController.route);
 
 
 // login a user
