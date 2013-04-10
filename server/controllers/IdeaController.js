@@ -17,15 +17,11 @@ var ideaController =
     {
       if (err || !ideas)
       {
-        res.json(
-        {
-          success: false,
-          message: 'Error accessing ideas'
-        });
+        res.json(utils.failure('Error accessing ideas'));
       }
       else
       {
-        res.json(ideas);
+        res.json(utils.success(ideas));
       }
     });
   },
@@ -44,15 +40,11 @@ var ideaController =
     {
       if (err || !idea || idea.userId != req.user.email)
       {
-        res.json(
-        {
-          success: false,
-          message: 'Error accessing idea'
-        });
+        res.json(utils.failure('Error accessing idea'));
       }
       else
       {
-        res.json(idea);
+        res.json(utils.success(idea));
       }
     });
   },
@@ -75,10 +67,7 @@ var ideaController =
     }).
     save(function(err, idea, count)
     {
-      res.json(
-      {
-        success: true
-      });
+      res.json(utils.success({}));
     });
   },
   
@@ -98,21 +87,14 @@ var ideaController =
     {
       if (err || !idea || (req.user.email != idea.userId))
       {
-        res.json(
-        {
-          success: false,
-          message: 'Error occurred accessing session'
-        });
+        res.json(utils.failure('Error occurred accessing session'));
       }
       else
       {
         idea.name = utils.encodeHTML(req.body.ideaName),
         idea.content = utils.encodeHTML(req.body.ideaContent),
         idea.save();
-        res.json(
-        {
-          success: true
-        });
+        res.json(utils.success({}));
       }
     });
   }
@@ -153,18 +135,12 @@ var ideaController =
           ideaController.editIdea(req,res);
           break;
         default:
-          res.json(
-          {
-            message: 'Invalid operation specified'
-          });
+          res.json(utils.failure('Invalid operation specified'));
         }
     }
     else
     {
-      res.json(
-      {
-        message: 'No idea operation specified'
-      });
+      res.json(utils.failure('No idea operation specified'));
     }
   }
 

@@ -53,11 +53,8 @@ var redisClient = redis.createClient();
 // index, we're not rendering and have no endpoint on the root
 app.get('/', function(req, res)
 {
-  res.json(
-  {
-    "success": true,
-    "message": "server is working"
-  });
+  result = {message: 'server is working'};
+  res.json(utils.success(result));
 });
 
 // REST/JSON api endpoint declaration
@@ -78,11 +75,7 @@ app.post('/login', passport.authenticate('local'), function(req, res)
   {
     if (err)
     {
-      res.json(
-      {
-        "success": false,
-        "message": "an error occured getting user from mongo"
-      });
+      res.json(utils.failure('an error occured getting user from mongo'));
     }
     else
     {
@@ -92,20 +85,11 @@ app.post('/login', passport.authenticate('local'), function(req, res)
       {
         if (err) 
         {
-          res.json(
-          {
-            "success": false,
-            "message": "Error occurred while getting session from session store"
-          });
+          res.json(utils.failure('Error occurred while getting session from session store'));
         }
         else
         {
-          res.json(
-          {
-            "status": true,
-            "message": "login succesful",
-            "sessionID": req.sessionID
-          });
+          res.json(utils.success('login successful'));
         }
       });
     }
@@ -117,11 +101,7 @@ app.post('/login', passport.authenticate('local'), function(req, res)
 app.get('/logout', function(req, res)
 {
   req.logout();
-  res.json(
-  {
-    "success": true,
-    "message": "successfully logged out"
-  });
+  res.json(utils.success('successfully logged out'));
 });
 
 // PASSPORT //
@@ -185,11 +165,7 @@ passport.deserializeUser(function(id, done)
   {
     if (err || !session) 
     {
-      res.json(
-      {
-        "success": false,
-        "message": "Error occurred while getting session from session store"
-      });
+      res.json(utils.failure('Error occurred while getting session from session store'));
     }
     else // no error and session exists
     { 
@@ -212,11 +188,7 @@ function ensureAuthenticated(req, res, next)
   {
     return next();
   }
-  res.json(
-  {
-    "success": false,
-    "message": "user not authenticated"
-  });
+  res.json(utils.failure('user not authenticated'));
 }
 
 
