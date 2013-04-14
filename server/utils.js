@@ -18,7 +18,7 @@ module.exports =
   // method to encapsulate successful response
   success: function (body) 
   {
-    result =
+    var result =
     {
       success: true,
       body: body
@@ -29,7 +29,7 @@ module.exports =
   // method to encapsulate response failure
   failure: function (message) 
   {
-    result =
+    var result =
     {
       success: false,
       message: message 

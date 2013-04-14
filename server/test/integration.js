@@ -314,6 +314,7 @@ describe('idea controller', function()
           if (err) throw err; 
           id = doc._id;
           done();
+
         });
       });
     })

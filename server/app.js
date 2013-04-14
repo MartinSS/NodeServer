@@ -16,6 +16,9 @@ var SERVER = {
   port: 8888
 };
 
+// time for session cache to live in seconds
+var ttl = 6000; 
+
 var app = module.exports = express();
 var User = require('./models/user').User;
 var Session = require('./models/session').Session;
@@ -79,7 +82,7 @@ app.post('/login', passport.authenticate('local'), function(req, res)
     }
     else
     {
-      var userSessionHash = "session:"+usr._id;
+      var userSessionHash = getSessionHash(usr._id);
       redisClient.hmset([userSessionHash, "sessionID", req.sessionID, "email", usr.email, 
             "givenName", usr.givenName], function(err, usr)
       {
@@ -89,7 +92,18 @@ app.post('/login', passport.authenticate('local'), function(req, res)
         }
         else
         {
-          res.json(utils.success('login successful'));
+          // set expiration of hash
+          redisClient.ttl(userSessionHash, function(err, ttl)
+          {
+            if (err) 
+            {
+              res.json(utils.failure('Error occurred while setting time to live on session cache'));
+            }
+            else
+            {
+              res.json(utils.success('login successful'));
+            }
+          })
         }
       });
     }
@@ -97,12 +111,38 @@ app.post('/login', passport.authenticate('local'), function(req, res)
 });
 
 
-// log out a user
+// finds and removes any session hash and logs user out
 app.get('/logout', function(req, res)
 {
-  req.logout();
-  res.json(utils.success('successfully logged out'));
+  // remove session hash
+  User.find(
+  {
+    email: req.user.email
+  }, function(err, user)
+  {
+    if (err)
+    {
+      res.json(utils.failure('error removing session cache'));
+    }
+    else
+    {
+      var userSessionHash = getSessionHash(user._id); 
+      redisClient.hdel(userSessionHash, function(err)
+      {
+        if (err)
+        {
+          res.json(utils.failure('error removing session cache'));
+        }
+        else
+        {
+          req.logout();
+          res.json(utils.success('successfully logged out'));
+        }
+      })
+    }
+  })
 });
+
 
 // PASSPORT //
 
@@ -163,17 +203,45 @@ passport.deserializeUser(function(id, done)
   var userSessionHash = "session:"+id;
   redisClient.hgetall(userSessionHash, function(err, session)
   {
-    if (err || !session) 
+    if (err)
     {
-      res.json(utils.failure('Error occurred while getting session from session store'));
+      res.json(utils.failure('Error occurred while getting session cache from session store'));
     }
-    else // no error and session exists
+    else 
     { 
-      var user = {email: session.email, givenName: session.givenName};
-      done(err, user);
-    } 
+      if (!session) // session expired or not present, so get from database
+      {
+        User.findOne(
+        {
+          _id: id
+        }, function (err, user)
+        {
+          var userSessionHash = getSessionHash(usr._id);
+          // note that we can save the sessionID if needed in the user's db document 
+          redisClient.hmset([userSessionHash, "sessionID", "", "email", usr.email, 
+            "givenName", usr.givenName], function(err)
+          {
+            if (err)  throw error;
+          })
+        })
+      }
+      // refresh expiry on session hash
+      redisClient.ttl(userSessionHash, function(err, ttl)
+      {
+        if (err) 
+        {
+          throw error;
+        }
+        else
+        {
+          var user = {email: session.email, givenName: session.givenName};
+          done(err, user);
+        }
+      })
+    };
   });
 });
+
 
 
 // BOOT THE SERVER //
@@ -189,6 +257,11 @@ function ensureAuthenticated(req, res, next)
     return next();
   }
   res.json(utils.failure('user not authenticated'));
+}
+
+function getSessionHash(id)
+{
+  return "session:"+id;
 }
 
 
