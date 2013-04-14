@@ -8,7 +8,7 @@ var signupUrl = "/v1/user/signup";
 var userController =
 {
 
-  // handles post /user
+  // handles post /v1/user/signup
   // create new profile for user with session
   // this is a signup
   // access with through curl by typing for example: 
@@ -38,7 +38,7 @@ var userController =
   // handles get /user
   // return profile for user with session
   // access with curl:
-  // curl -b cookies.txt "http://localhost:8888/api/user"
+  // curl -b cookies.txt "http://localhost:8888/v1/user/get"
   getUser: function(req, res)
   {
     User.findOne(
@@ -60,7 +60,7 @@ var userController =
   // handles put /user
   // modify profile for user with session
   // access by curl with for example:
-  //  curl -b cookies.txt-X PUT -d "givenName=Thomas&familyName=Sanchez&password=abcdef" "http://localhost:8888/api/user" 
+  //  curl -b cookies.txt-X PUT -d "givenName=Thomas&familyName=Sanchez&password=abcdef" "http://localhost:8888/v1/user/edit" 
   editUser: function(req, res)
   {
     User.findOne(
@@ -68,21 +68,28 @@ var userController =
       email: req.user.email
     }, function(err, usr)
     {
-      if (err || !usr || req.user.email != usr.email)
+      if (err || !usr )
       {
         res.json(utils.failure('Error accessing user'));
       }
       else
       {
-        usr.givenName = utils.encodeHTML(req.body.givenName);
-        usr.familyName = utils.encodeHTML(req.body.familyName);
-        usr.password = req.body.password;
-        usr.save();
-        // update session cache
-        var userSessionHash = "session:"+usr._id;
-        redisClient.hmset(userSessionHash, "sessionID", req.sessionID, "email", usr.email,
-          "givenName", user.givenName)
-        res.json(utils.success({}));
+        if (req.body.givenName!=undefined&&req.body.familyName!=undefined&&req.body.password!=undefined)
+        {
+          usr.givenName = utils.encodeHTML(req.body.givenName);
+          usr.familyName = utils.encodeHTML(req.body.familyName);
+          usr.password = req.body.password;
+          usr.save();
+          // update session cache
+          var userSessionHash = "session:"+usr._id;
+          redisClient.hmset(userSessionHash, "sessionID", req.sessionID, "email", usr.email,
+          "givenName", usr.givenName)
+          res.json(utils.success({}));
+        }
+        else
+        {
+          res.json(utils.failure('insufficient information provided'));
+        }
       }
     });
   }
@@ -99,7 +106,6 @@ var userController =
 
 function route(req, res)
 {
-  console.log("the request url is:"+req.url);
   if (!(typeof req.params.op === 'undefined'))
   {
     switch (req.params.op)

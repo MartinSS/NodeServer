@@ -59,16 +59,23 @@ var ideaController =
   
   addIdea: function (req, res)
   {
-    new Idea(
+    if (req.body.ideaName!=undefined&&req.body.ideaContent!=undefined)
     {
-      name: utils.encodeHTML(req.body.ideaName),
-      content: utils.encodeHTML(req.body.ideaContent),
-      userId: req.user.email
-    }).
-    save(function(err, idea, count)
+      new Idea(
+      {
+        name: utils.encodeHTML(req.body.ideaName),
+        content: utils.encodeHTML(req.body.ideaContent),
+        userId: req.user.email
+      }).
+      save(function(err, idea, count)
+      {
+        res.json(utils.success({}));
+      });
+    }
+    else
     {
-      res.json(utils.success({}));
-    });
+      res.json(utils.failure('Idea information missing'));
+    }
   },
   
   // handles put /idea
@@ -87,14 +94,25 @@ var ideaController =
     {
       if (err || !idea || (req.user.email != idea.userId))
       {
+        if (!idea) 
+        {
+          console.log("idea is null for req.params.id:"+req.params.id);     
+        }
         res.json(utils.failure('Error occurred accessing session'));
       }
       else
       {
-        idea.name = utils.encodeHTML(req.body.ideaName),
-        idea.content = utils.encodeHTML(req.body.ideaContent),
-        idea.save();
-        res.json(utils.success({}));
+        if (req.body.ideaName!=undefined&&req.body.ideaContent!=undefined)
+        {
+          idea.name = utils.encodeHTML(req.body.ideaName);
+          idea.content = utils.encodeHTML(req.body.ideaContent);
+          idea.save();
+          res.json(utils.success({}));
+        }
+        else
+        {
+          res.json(utils.failure('Idea information missing'));
+        }
       }
     });
   }
@@ -129,7 +147,7 @@ var ideaController =
           }
           break;
         case 'add':
-          ideaController.addIdeas(req,res);
+          ideaController.addIdea(req,res);
           break;
         case 'edit':
           ideaController.editIdea(req,res);

@@ -5,9 +5,9 @@ var express = require('express'),
   redis = require('redis'),
   passport = require('passport'),
   util = require('util'),
+  utils = require('./utils'),
   userController = require('./controllers/UserController.js'),
   ideaController = require('./controllers/IdeaController.js'),
-  signupController = require('./controllers/SignupController.js'),
   LocalStrategy = require('passport-local').Strategy;
 
 // server configuration
@@ -122,7 +122,7 @@ passport.use(new LocalStrategy(
     {
       return done(err, false,
       {
-        message: 'Error occurred acccessing users collection'
+        message: 'Error occurred accessing users collection'
       });
     }
     else
