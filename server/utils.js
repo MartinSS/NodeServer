@@ -18,11 +18,23 @@ module.exports =
   // method to encapsulate successful response
   success: function (body) 
   {
-    var result =
+    var result;
+    if (body)
     {
-      success: true,
-      body: body
+      result =
+      {
+        "success": true,
+        "result": body
+      }
     }
+    else
+    {
+      result =
+      {
+        "success": true,
+      }
+    }
+
     return result;
   },
 
@@ -31,10 +43,16 @@ module.exports =
   {
     var result =
     {
-      success: false,
-      message: message 
+      "success": false,
+      "message": message 
     }
     return result;
+  },
+
+  getSessionHash: function (id)
+  {
+    return "session:"+id;
   }
+
 
 };

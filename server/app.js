@@ -82,7 +82,7 @@ app.post('/login', passport.authenticate('local'), function(req, res)
     }
     else
     {
-      var userSessionHash = getSessionHash(usr._id);
+      var userSessionHash = utils.getSessionHash(usr._id);
       redisClient.hmset([userSessionHash, "sessionID", req.sessionID, "email", usr.email, 
             "givenName", usr.givenName], function(err, usr)
       {
@@ -115,7 +115,7 @@ app.post('/login', passport.authenticate('local'), function(req, res)
 app.get('/logout', function(req, res)
 {
   // remove session hash
-  User.find(
+  User.findOne(
   {
     email: req.user.email
   }, function(err, user)
@@ -126,11 +126,12 @@ app.get('/logout', function(req, res)
     }
     else
     {
-      var userSessionHash = getSessionHash(user._id); 
-      redisClient.hdel(userSessionHash, function(err)
+      var userSessionHash = utils.getSessionHash(user._id); 
+      redisClient.del(userSessionHash, function(err)
       {
         if (err)
         {
+          console.log("error removing session cache userSessionHash:"+userSessionHash);
           res.json(utils.failure('error removing session cache'));
         }
         else
@@ -216,7 +217,7 @@ passport.deserializeUser(function(id, done)
           _id: id
         }, function (err, user)
         {
-          var userSessionHash = getSessionHash(usr._id);
+          var userSessionHash = utils.getSessionHash(usr._id);
           // note that we can save the sessionID if needed in the user's db document 
           redisClient.hmset([userSessionHash, "sessionID", "", "email", usr.email, 
             "givenName", usr.givenName], function(err)
@@ -234,7 +235,7 @@ passport.deserializeUser(function(id, done)
         }
         else
         {
-          var user = {email: session.email, givenName: session.givenName};
+          var user = {"id": id, "email": session.email, "givenName": session.givenName};
           done(err, user);
         }
       })
@@ -259,10 +260,6 @@ function ensureAuthenticated(req, res, next)
   res.json(utils.failure('user not authenticated'));
 }
 
-function getSessionHash(id)
-{
-  return "session:"+id;
-}
 
 
 /* -------------------------------------------------------------------- */
