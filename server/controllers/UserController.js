@@ -35,10 +35,49 @@ var userController =
   },
 
 
+  // handles post /v1/user/delete
+  // delete profile for user with session
+  // access with through curl by typing for example: 
+  // curl X POST -d "givenName=Brian&familyName=Sonman&password=aaabbb&email=brian@example.com" "http://localhost:8888/v1/user/delete"
+  deleteUser: function(req, res)
+  {
+    // delete session cache
+    var userSessionHash = utils.getSessionHash(req.user.id);
+    redisClient.del(userSessionHash, function(err)
+    {
+      if (err)
+      {
+        console.log("error removing session cache userSessionHash:"+userSessionHash);
+        res.json(utils.failure('error removing session cache'));
+      }
+      else
+      {
+        User.remove(
+        {
+          email: req.user.email
+        }, function(err)
+        {
+          if (err)
+          {
+            res.json(utils.failure('Error deleting user'));
+          }
+          else
+          {
+            req.logout();
+            res.json(utils.success());
+          }
+        });
+      }
+    });
+  },
+
+
   // handles get /user
   // return profile for user with session
   // access with curl:
   // curl -b cookies.txt "http://localhost:8888/v1/user/get"
+
+
   getUser: function(req, res)
   {
     User.findOne(
@@ -74,22 +113,24 @@ var userController =
       }
       else
       {
-        if (req.body.givenName!=undefined&&req.body.familyName!=undefined&&req.body.password!=undefined)
+        if (req.body.givenName)
         {
           usr.givenName = utils.encodeHTML(req.body.givenName);
-          usr.familyName = utils.encodeHTML(req.body.familyName);
-          usr.password = req.body.password;
-          usr.save();
-          // update session cache
-          var userSessionHash = "session:"+usr._id;
-          redisClient.hmset(userSessionHash, "sessionID", req.sessionID, "email", usr.email,
-          "givenName", usr.givenName)
-          res.json(utils.success({}));
         }
-        else
+        if (req.body.familyName)
         {
-          res.json(utils.failure('insufficient information provided'));
+          usr.familyName = utils.encodeHTML(req.body.familyName);
         }
+        if (req.body.password)
+        {
+          usr.password = req.body.password;
+        } 
+        usr.save();
+        // update session cache
+        var userSessionHash = "session:"+usr._id;
+        redisClient.hmset(userSessionHash, "sessionID", req.sessionID, "email", usr.email,
+        "givenName", usr.givenName)
+        res.json(utils.success({}));
       }
     });
   }
@@ -115,6 +156,9 @@ function route(req, res)
         break;
       case 'edit':
         userController.editUser(req,res);
+        break;
+      case 'delete':
+        userController.deleteUser(req,res);
         break;
       default:
         res.json(utils.failure('Invalid operation specified'));
