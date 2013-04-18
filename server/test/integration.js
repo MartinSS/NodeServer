@@ -15,14 +15,14 @@ var user =
   givenName: 'timmy',
   familyName: 'redman',
   email: 'timmy@example.com',
-  password: 'aaaaaa'
+  "password": 'aaaaaa'
 }
 
 var otherUser =
 {
-  givenName: 'timmy',
+  givenName: 'Timothy',
   familyName: 'redman',
-  email: 'timmy@example.com',
+  email: 'timmy2@example.com',
   password: 'aaaaaa'
 }
 
@@ -73,6 +73,13 @@ var idea4 =
   content: 'Lorem ipsum ,...'
 }
 
+var idea5 =
+{
+  name: 'idea25',
+  content: 'Lorem ipsum ,...'
+}
+
+
 var malIdea =
 {
   name: "",
@@ -86,7 +93,7 @@ var insertIdea =
   userId: 'test@example.com'
 }
 
-var login = function (request, done)
+var login = function (request, user, done)
 {
   request
     .post('/login')
@@ -95,17 +102,15 @@ var login = function (request, done)
     {
       if (err) 
       {
-        throw err;
+        throw error;
       }
       agent.saveCookies(res);
       done(agent);
     });
 };
 
-
 describe('user controller', function()
 {
-
 
   describe('addUser', function()
   {
@@ -123,6 +128,15 @@ describe('user controller', function()
           })
     })
 
+    it('should add a user which can successfully login', function(done)
+    {
+      login(request, {email: user.email, password: user.password}, function(loginAgent)
+      {
+        agent = loginAgent;
+        done();
+      });
+    })
+
     it('should not attempt to add a user if insufficient information provided', function(done)
     {
       var req = request
@@ -135,15 +149,37 @@ describe('user controller', function()
             done();
           })
     })
+
+    after(function(done)
+    {
+      var req = request
+        .post('/v1/user/delete');
+        agent.attachCookies(req);
+        req.end(function(err)
+        {
+          if (err) throw error;
+          done();
+        })
+    })
+
   })
 
 
   describe('getUser', function()
   {
+
     var agent;
     before(function(done) 
     {
-      login(request, function(loginAgent)
+      var req = request
+        .post('/v1/user/signup')
+        .send(user)
+        .end(function(err)
+        {
+          if (err) throw error;
+        })
+
+      login(request, {email: user.email, password: user.password}, function(loginAgent)
       {
         agent = loginAgent;
         done();
@@ -179,6 +215,20 @@ describe('user controller', function()
           done();
         })
     })
+
+
+    after(function(done)
+    {
+      var req = request
+        .post('/v1/user/delete');
+        agent.attachCookies(req);
+        req.end(function(err)
+        {
+          if (err) throw error;
+          done();
+        })
+    })
+
   })
 
 
@@ -187,7 +237,15 @@ describe('user controller', function()
     var agent;
     before(function(done) 
     {
-      login(request, function(loginAgent)
+      var req = request
+        .post('/v1/user/signup')
+        .send(user)
+        .end(function(err)
+        {
+          if (err) throw error;
+        })
+
+      login(request, {email: user.email, password: user.password}, function(loginAgent)
       {
         agent = loginAgent;
         done();
@@ -199,38 +257,37 @@ describe('user controller', function()
       var req = request
         .post('/v1/user/edit');
         agent.attachCookies(req);
-        req.send(changedUser)  
+        req.send({"givenName": changedUser.givenName, "familyName": changedUser.familyName})  
           .end(function(err, res)
           {
             res.should.be.json;
             res.text.should.match(/success.*true/);
-            MongoClient.connect("mongodb://localhost:27017/idea_service", function(err, db)
+            // check content changed
+            req = request
+            .get('/v1/user/get');
+            agent.attachCookies(req);
+            req.end(function(err, res)
             {
-              var collection = db.collection('users'); 
-              collection.findOne({email:changedUser.email}, function(err, doc)
-              {
-                if (err) throw err; 
-                doc.givenName.should.equal(changedUser.givenName);  
-                done();
-              });
-            });
-          })
+              res.body.result.givenName.should.equal(changedUser.givenName);
+              res.body.result.familyName.should.equal(changedUser.familyName);
+            })
+            done();
+          });
     })
 
-    it('should not permit operation if incomplete data provided', function(done)
+    after(function(done)
     {
       var req = request
-        .post('/v1/user/edit')
+        .post('/v1/user/delete');
         agent.attachCookies(req);
-        req.send(malUser)
-          .end(function(err, res)
-          {
-            res.should.be.json;
-            res.text.should.match(/success.*false/);
-            done();
-          })
+        req.end(function(err)
+        {
+          if (err) throw error;
+          done();
+        })
     })
   })
+
 })
 
 
@@ -239,7 +296,14 @@ describe('idea controller', function()
   var agent;
   before(function(done) 
   {
-    login(request, function(loginAgent)
+    var req = request
+      .post('/v1/user/signup')
+      .send(user)
+      .end(function(err)
+      {
+        if (err) throw error;
+      })
+    login(request, {email: user.email, password: user.password}, function(loginAgent)
     {
       agent = loginAgent;
       done();
@@ -249,6 +313,12 @@ describe('idea controller', function()
 
   describe('add idea', function()
   {
+
+    var ideaId;
+    before(function(done)
+    {
+      done();
+    })
 
     it('should create a new idea', function(done)
     {
@@ -261,6 +331,7 @@ describe('idea controller', function()
              res.should.be.json;
              res.text.should.match(/success.*true/);
              res.statusCode.should.equal(200);
+             ideaId = res.body.result.id;
              done();
            });
     })
@@ -282,15 +353,14 @@ describe('idea controller', function()
 
     after(function(done)
     {
-      MongoClient.connect("mongodb://localhost:27017/idea_service", function(err, db)
-      {
-        var collection = db.collection('ideas'); 
-        collection.remove({userId:user.email}, function(err)
+      var url = '/v1/idea/delete/'+ideaId;
+      var req = request
+        .post(url);
+        agent.attachCookies(req);
+        req.end(function(err, res) 
         {
-          if (err) throw err; 
           done();
         });
-      });
     })
 
   })
@@ -299,87 +369,95 @@ describe('idea controller', function()
   describe('editIdea', function()
   {
 
-    var id;
+    var ideaId;
+    var otherUserIdeaId
     before(function(done)
     {
-      MongoClient.connect("mongodb://localhost:27017/idea_service", function(err, db)
-      {
-        var collection = db.collection('ideas'); 
-        collection.insert({userId:user.email, name: idea1.name, content: idea1.content}, function(err)
-        {
-          if (err) throw err; 
-        });
-        collection.findOne({userId:user.email}, function(err, doc)
-        {
-          if (err) throw err; 
-          id = doc._id;
-          done();
-
-        });
-      });
+      var req = request
+        .post('/v1/idea/add');
+        agent.attachCookies(req);
+        req.send({ideaName:idea1.name, ideaContent: idea1.content})
+           .end(function(err, res)
+           {
+             ideaId = res.body.result.id;
+             // add other user
+             var req = request
+             .post('/v1/user/signup')
+             .send(otherUser)
+             .end(function(err)
+             {
+               if (err) throw error;
+               // logout regular user
+               req = request
+               .get('/logout');
+               agent.attachCookies(req);
+               req.end(function(err)
+               {
+                 if (err) throw error;
+                 // login other user
+                 login(request, {email: otherUser.email, password: otherUser.password}, function(loginAgent)
+                 {
+                   agent = loginAgent;
+                   req = request
+                   .post('/v1/idea/add');
+                   agent.attachCookies(req);
+                   req.send({ideaName:idea5.name, ideaContent: idea5.content})
+                   .end(function(err, res)
+                   {
+                     otherUserIdeaId = res.body.result.id;
+                     // logout other user
+                     req = request
+                     .get('/logout');
+                     agent.attachCookies(req);
+                     req.end(function(err)
+                     {
+                       if (err) throw error;
+                       // log back in regular user
+                       login(request, {email: user.email, password: user.password}, function(loginAgent)
+                       {
+                         agent = loginAgent;
+                         done();
+                       });
+                     })
+                   })
+                 });
+               })
+             })
+           });
     })
+
 
     it('should edit an existing idea', function(done)
     {
-      var url = '/v1/idea/edit/'+id;
+
+      var url = '/v1/idea/edit/'+ideaId;
       var req = request
         .post(url);
         agent.attachCookies(req);
         req.send({ideaName:idea2.name, ideaContent: idea2.content})
            .end(function(err, res) 
            {
+             if (err) throw error;
              res.should.be.json;
              res.text.should.match(/success.*true/);
              res.statusCode.should.equal(200);
+             var url = '/v1/idea/get/'+ideaId;
+             var req = request
+              .post(url);
+              agent.attachCookies(req);
+              req.end(function(err, res) 
+              {
+                res.body.result.name.should.equal(idea2.name);
+                res.body.result.content.should.equal(idea2.content);
+                done();
+              });
            });
-      MongoClient.connect("mongodb://localhost:27017/idea_service", function(err, db)
-      {
-        if (err) throw error;
-        var collection = db.collection('ideas');
-        collection.findOne({_id:id}, function(err, doc)
-        {
-          if (err) throw err; 
-          doc.name.should.equal(idea2.name);  
-          doc.content.should.equal(idea2.content);  
-          done();
-        });
-      });
     })
 
-    it('should not update an idea if insufficient information provided', function(done)
-    {
-      var url = '/v1/idea/edit/'+id;
-      var req = request
-        .post(url);
-        agent.attachCookies(req);
-        req.send({ideaName:idea1.name, ideaContent: undefined})
-           .end(function(err, res) 
-           {
-             res.should.be.json;
-             res.text.should.match(/success.*false/);
-             res.statusCode.should.equal(200);
-             done();
-           });
-    });
 
     it('should not update an idea of other user', function(done)
     {
-      var id;
-      MongoClient.connect("mongodb://localhost:27017/idea_service", function(err, db)
-      {
-        var collection = db.collection('ideas'); 
-        collection.insert(insertIdea, function(err)
-        {
-          if (err) throw error;
-        })
-        collection.findOne({userId: insertIdea.userId}, function(err, doc)
-        {
-          if (err) throw err;
-          id = doc._id;
-        })
-      });
-
-      var url = '/v1/idea/edit/'+id;
+      var url = '/v1/idea/edit/'+otherUserIdeaId;
       var req = request
         .post(url);
         agent.attachCookies(req);
@@ -392,6 +470,7 @@ describe('idea controller', function()
              done();
            });
     });
+
 
     it('should fail if idea id invalid', function(done)
     {
@@ -412,49 +491,76 @@ describe('idea controller', function()
 
     after(function(done)
     {
-      MongoClient.connect("mongodb://localhost:27017/idea_service", function(err, db)
-      {
-        var collection = db.collection('ideas'); 
-        collection.remove({userId: insertIdea.userId}, function(err)
+      var url = '/v1/idea/delete/'+ideaId;
+      var req = request
+        .post(url);
+        agent.attachCookies(req);
+        req.end(function(err)
         {
           if (err) throw error;
-        });
-        collection.remove({userId:user.email}, function(err)
-        {
-          if (err) throw err; 
-          done();
-        });
-      });
-    })
+             // logout regular user
+             req = request
+             .get('/logout');
+             agent.attachCookies(req);
+             req.end(function(err)
+             {
+               if (err) throw error;
+               // login other user
+               login(request, {email: otherUser.email, password: otherUser.password}, function(loginAgent)
+               {
+                 agent = loginAgent;
+                 var url = '/v1/idea/delete/'+otherUserIdeaId;
+                 req = request
+                 .post(url);
+                 agent.attachCookies(req);
+                 req.end(function(err)
+                 {
+                   // delete other user
+                   req = request
+                   .post('/v1/user/delete');
+                   agent.attachCookies(req);
+                   req.end(function(err)
+                   {
+                     if (err) throw error;
 
+                     // log back in regular user
+                     login(request, {email: user.email, password: user.password}, function(loginAgent)
+                     {
+                       agent = loginAgent;
+                       done();
+                     });
+                   })
+                 });
+               });
+             })
+        });
+    })
   })
 
 
   describe('get ideas', function()
   {
-
     before(function(done)
     {
-      login(request, function(loginAgent)
-      {
-        agent = loginAgent;
-      });
 
-      MongoClient.connect("mongodb://localhost:27017/idea_service", function(err, db)
-      {
-        if (err) throw error;
-        var collection = db.collection('ideas'); 
-        collection.insert({userId: user.email, name: idea3.name, content: idea3.content}, function(err)
-        {
-          if (err) throw error;
-        });
-        collection.insert({userId: user.email, name: idea4.name, content: idea4.content}, function(err)
-        {
-          if (err) throw error;
-          done();
-        });
-      })
+      var req = request
+        .post('/v1/idea/add');
+        agent.attachCookies(req);
+        req.send({ideaName:idea3.name, ideaContent: idea3.content})
+           .end(function(err, res) 
+           {
+             // ideaId = res.body.result.id;
+             req = request
+             .post('/v1/idea/add');
+             agent.attachCookies(req);
+             req.send({ideaName:idea4.name, ideaContent: idea4.content})
+             .end(function(err, res)
+             {
+               done();
+             });
+           });
     })
+
 
     it('should get all ideas of the authenticated user', function(done)
     {
@@ -463,11 +569,12 @@ describe('idea controller', function()
       agent.attachCookies(req); 
       req.end(function(err, res)
       {
-        res.body.body.length.should.equal(2);
+        res.body.result.length.should.equal(2);
         res.statusCode.should.equal(200);
         done();
       });
     })
+
 
     it('should not get ideas if the user is not authenticated', function(done)
     {
@@ -478,7 +585,7 @@ describe('idea controller', function()
           .end(function(err, res)
         {
           res.text.should.match(/success.*false/);
-          login(request, function(loginAgent)
+          login(request, {email: user.email, password: user.password}, function(loginAgent)
           {
             agent = loginAgent;
             done();
@@ -489,16 +596,14 @@ describe('idea controller', function()
 
     after(function(done)
     {
-      MongoClient.connect("mongodb://localhost:27017/idea_service", function(err, db)
-      {
-        if (err) throw error;
-        var collection = db.collection('ideas'); 
-        collection.remove({userId: user.email}, function(err)
+      var req = request
+        .post('/v1/idea/delete');
+        agent.attachCookies(req); 
+        req.end(function(err)
         {
           if (err) throw error;
           done();
-        });
-      })
+        })
     })
 
   })
@@ -507,29 +612,67 @@ describe('idea controller', function()
   describe('getIdea', function()
   {
 
-    var id;
+    var ideaId;
+    var otherUserIdeaId
     before(function(done)
     {
-      MongoClient.connect("mongodb://localhost:27017/idea_service", function(err, db)
-      {
-        var collection = db.collection('ideas'); 
-        collection.insert({userId:user.email, name: idea1.name, content: idea1.content}, function(err)
-        {
-          if (err) throw err; 
-        });
-        collection.findOne({userId:user.email}, function(err, doc)
-        {
-          if (err) throw err; 
-          id = doc._id;
-          done();
-        });
-      });
+      var req = request
+        .post('/v1/idea/add');
+        agent.attachCookies(req);
+        req.send({ideaName:idea1.name, ideaContent: idea1.content})
+           .end(function(err, res)
+           {
+             ideaId = res.body.result.id;
+             // add other user
+             var req = request
+             .post('/v1/user/signup')
+             .send(otherUser)
+             .end(function(err)
+             {
+               if (err) throw error;
+               // logout regular user
+               req = request
+               .get('/logout');
+               agent.attachCookies(req);
+               req.end(function(err)
+               {
+                 if (err) throw error;
+                 // login other user
+                 login(request, {email: otherUser.email, password: otherUser.password}, function(loginAgent)
+                 {
+                   agent = loginAgent;
+                   req = request
+                   .post('/v1/idea/add');
+                   agent.attachCookies(req);
+                   req.send({ideaName:idea5.name, ideaContent: idea5.content})
+                   .end(function(err, res)
+                   {
+                     otherUserIdeaId = res.body.result.id;
+                     // logout other user
+                     req = request
+                     .get('/logout');
+                     agent.attachCookies(req);
+                     req.end(function(err)
+                     {
+                       if (err) throw error;
+                       // log back in regular user
+                       login(request, {email: user.email, password: user.password}, function(loginAgent)
+                       {
+                         agent = loginAgent;
+                         done();
+                       });
+                     })
+                   })
+                 });
+               })
+             })
+           });
     })
 
 
     it('should get an idea by id', function(done)
     {
-      var url = '/v1/idea/get/'+id;
+      var url = '/v1/idea/get/'+ideaId;
       var req = request
         .get(url);
         agent.attachCookies(req);
@@ -558,24 +701,11 @@ describe('idea controller', function()
         });
     })
 
+
     it('should fail if the idea is owned by another user', function(done)
     {
-      var id;
-      MongoClient.connect("mongodb://localhost:27017/idea_service", function(err, db)
-      {
-        var collection = db.collection('ideas'); 
-        collection.insert(insertIdea, function(err)
-        {
-          if (err) throw error;
-        })
-        collection.findOne({userId: insertIdea.userId}, function(err, doc)
-        {
-          if (err) throw err;
-          id = doc._id;
-        })
-      });
 
-      var url = '/v1/idea/get/'+id;
+      var url = '/v1/idea/get/'+otherUserIdeaId;
       var req = request
         .get(url);
         agent.attachCookies(req);
@@ -588,23 +718,66 @@ describe('idea controller', function()
         });
     })
 
-    after (function(done)
+
+    after(function(done)
     {
-      MongoClient.connect("mongodb://localhost:27017/idea_service", function(err, db)
-      {
-        var collection = db.collection('ideas'); 
-        collection.remove({userId: insertIdea.userId}, function(err)
+      var url = '/v1/idea/delete/'+ideaId;
+      var req = request
+        .post(url);
+        agent.attachCookies(req);
+        req.end(function(err)
         {
           if (err) throw error;
+             // logout regular user
+             req = request
+             .get('/logout');
+             agent.attachCookies(req);
+             req.end(function(err)
+             {
+               if (err) throw error;
+               // login other user
+               login(request, {email: otherUser.email, password: otherUser.password}, function(loginAgent)
+               {
+                 agent = loginAgent;
+                 var url = '/v1/idea/delete/'+otherUserIdeaId;
+                 req = request
+                 .post(url);
+                 agent.attachCookies(req);
+                 req.end(function(err)
+                 {
+                   // delete other user
+                   req = request
+                   .post('/v1/user/delete');
+                   agent.attachCookies(req);
+                   req.end(function(err)
+                   {
+                     if (err) throw error;
+
+                     // log back in regular user
+                     login(request, {email: user.email, password: user.password}, function(loginAgent)
+                     {
+                       agent = loginAgent;
+                       done();
+                     });
+                   })
+                 });
+               });
+             })
         });
-        collection.remove({userId:user.email}, function(err)
-        {
-          if (err) throw err; 
-          done();
-        });
-      });
     })
 
   })
 
+  after(function(done)
+  {
+    var req = request
+      .post('/v1/user/delete');
+      agent.attachCookies(req);
+      req.end(function(err)
+      {
+        if (err) throw error;
+        done();
+      })
+  })
 })
+
