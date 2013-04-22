@@ -62,11 +62,9 @@ app.get('/', function(req, res)
 
 // REST/JSON api endpoint declaration
 
-app.all('/v1/user/signup', userController.route);
+app.all('/v1/user/create', userController.route);
 app.all('/v1/user/:op?', ensureAuthenticated, userController.route);
 app.all('/v1/idea/:op?/:id?', ensureAuthenticated, ideaController.route);
-// app.all('/v1/signup/:op?', signupController.route);
-
 
 // login a user
 app.post('/login', passport.authenticate('local'), function(req, res)
@@ -199,6 +197,7 @@ passport.serializeUser(function(user, done)
 });
 
 
+// test this not when not logged in
 passport.deserializeUser(function(id, done)
 {
   var userSessionHash = "session:"+id;

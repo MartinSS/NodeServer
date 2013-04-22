@@ -3,17 +3,17 @@ var User = require('../models/user').User,
     redis = require('redis');
 
 var redisClient = redis.createClient();
-var signupUrl = "/v1/user/signup";
+var signupUrl = "/v1/user/create";
 
 var userController =
 {
 
-  // handles post /v1/user/signup
+  // handles post /v1/user/create
   // create new profile for user with session
   // this is a signup
   // access with through curl by typing for example: 
-  // curl X POST -d "givenName=Brian&familyName=Sonman&password=aaabbb&email=brian@example.com" "http://localhost:8888/v1/user/signup"
-  addUser: function(req, res)
+  // curl X POST -d "givenName=Brian&familyName=Sonman&password=aaabbb&email=brian@example.com" "http://localhost:8888/v1/user/create"
+  createUser: function(req, res)
   {
     if (req.body.givenName!=undefined&&req.body.familyName!=undefined&&req.body.email!=undefined&&req.body.password!=undefined)
     {
@@ -72,13 +72,12 @@ var userController =
   },
 
 
-  // handles get /user
+  // handles read /user
   // return profile for user with session
   // access with curl:
-  // curl -b cookies.txt "http://localhost:8888/v1/user/get"
+  // curl -b cookies.txt "http://localhost:8888/v1/user/read"
 
-
-  getUser: function(req, res)
+  readUser: function(req, res)
   {
     User.findOne(
     {
@@ -99,8 +98,8 @@ var userController =
   // handles put /user
   // modify profile for user with session
   // access by curl with for example:
-  //  curl -b cookies.txt-X PUT -d "givenName=Thomas&familyName=Sanchez&password=abcdef" "http://localhost:8888/v1/user/edit" 
-  editUser: function(req, res)
+  //  curl -b cookies.txt-X PUT -d "givenName=Thomas&familyName=Sanchez&password=abcdef" "http://localhost:8888/v1/user/update" 
+  updateUser: function(req, res)
   {
     User.findOne(
     {
@@ -139,9 +138,10 @@ var userController =
 
 // module method to channel requests to correct handler of controller
 // handles following urls:
-//    /v1/user/signup --> addUser method
-//    /v1/user/get --> getUser method
-//    /v1/user/edit --> editUser method
+//    /v1/user/create --> createUser method
+//    /v1/user/read --> readUser method
+//    /v1/user/update --> updateUser method
+//    /v1/user/delete --> deleteUser method
 // if no or no known operation is specified, returns json error message 
 //
 
@@ -151,11 +151,11 @@ function route(req, res)
   {
     switch (req.params.op)
     {
-      case 'get':
-        userController.getUser(req,res);
+      case 'read':
+        userController.readUser(req,res);
         break;
-      case 'edit':
-        userController.editUser(req,res);
+      case 'update':
+        userController.updateUser(req,res);
         break;
       case 'delete':
         userController.deleteUser(req,res);
@@ -166,7 +166,7 @@ function route(req, res)
   }
   else if (req.url == signupUrl) 
   {
-    userController.addUser(req,res);
+    userController.createUser(req,res);
   }
   else
   {

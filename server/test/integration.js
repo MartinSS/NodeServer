@@ -69,30 +69,31 @@ var agent;
 describe('user controller', function()
 {
 
-  describe('addUser', function()
+  describe('createUser', function()
   {
 
-    it('should add a new user if valid information is given', function(done)
+    it('should create a new user if valid information is given', function(done)
     {
       var req = request
-        .post('/v1/user/signup')
+        .post('/v1/user/create')
         .send(user)
           .end(function(err, res)
           {
+            if (err) throw error;
             shouldBeSuccess(res);
             done();
           })
     })
 
-    it('should add a user which can successfully login', function(done)
+    it('should create a user which can successfully login', function(done)
     {
       loginUser(user,done);
     })
 
-    it('should not attempt to add a user if insufficient information provided', function(done)
+    it('should not attempt to create a user if insufficient information provided', function(done)
     {
       var req = request
-        .post('/v1/user/signup')
+        .post('/v1/user/create')
         .send(malUser)  
           .end(function(err, res)
           {
@@ -109,12 +110,12 @@ describe('user controller', function()
   })
 
 
-  describe('getUser', function()
+  describe('readUser', function()
   {
 
     before(function(done) 
     {
-      addUser(user, function()
+      createUser(user, function()
       {
         loginUser(user, function()
         {
@@ -123,10 +124,10 @@ describe('user controller', function()
       });
     }); 
 
-    it('should get the logged in user profile information', function(done)
+    it('should read the logged in user profile information', function(done)
     {
       var req = request
-        .get('/v1/user/get');
+        .get('/v1/user/read');
         agent.attachCookies(req);
         req.expect(200)
         .expect('Content-Type', /json/)
@@ -145,7 +146,7 @@ describe('user controller', function()
       var req = request
         .get('/logout');
         req = request
-          .get('/v1/user/get')
+          .get('/v1/user/read')
           .end(function(err, res)
         {
           res.text.should.match(/success.*false/);
@@ -164,12 +165,12 @@ describe('user controller', function()
   })
 
 
-  describe('editUser', function()
+  describe('updateUser', function()
   {
 
     before(function(done) 
     {
-      addUser(user, function()
+      createUser(user, function()
       {
         loginUser(user, function()
         {
@@ -181,7 +182,7 @@ describe('user controller', function()
     it('should change the information in a user profile', function(done)
     {
       var req = request
-        .post('/v1/user/edit');
+        .post('/v1/user/update');
         agent.attachCookies(req);
         req.send({"givenName": changedUser.givenName, "familyName": changedUser.familyName})  
           .end(function(err, res)
@@ -189,7 +190,7 @@ describe('user controller', function()
             shouldBeSuccess(res);
             // check content changed
             req = request
-            .get('/v1/user/get');
+            .get('/v1/user/read');
             agent.attachCookies(req);
             req.end(function(err, res)
             {
@@ -214,7 +215,7 @@ describe('idea controller', function()
 {
   before(function(done) 
   {
-    addUser(user, function()
+    createUser(user, function()
     {
       loginUser(user, function()
       {
@@ -224,7 +225,7 @@ describe('idea controller', function()
   })
 
 
-  describe('add idea', function()
+  describe('create idea', function()
   {
 
     var ideaId;
@@ -236,7 +237,7 @@ describe('idea controller', function()
     it('should create a new idea', function(done)
     {
       var req = request
-        .post('/v1/idea/add');
+        .post('/v1/idea/create');
         agent.attachCookies(req);
         req.send({ideaName:idea1.name, ideaContent: idea1.content})
            .end(function(err, res) 
@@ -250,7 +251,7 @@ describe('idea controller', function()
     it('should not create an idea if insufficient information provided', function(done)
     {
       var req = request
-        .post('/v1/idea/add');
+        .post('/v1/idea/create');
         agent.attachCookies(req);
         req.send({ideaName:idea1.name, ideaContent: undefined})
            .end(function(err, res) 
@@ -268,7 +269,7 @@ describe('idea controller', function()
   })
 
 
-  describe('editIdea', function()
+  describe('updateIdea', function()
   {
 
     before(function(done)
@@ -279,11 +280,11 @@ describe('idea controller', function()
       });
     });        
 
-    it('should edit an existing idea', function(done)
+    it('should update an existing idea', function(done)
     {
-      getFirstIdeaId(function(id)
+      readFirstIdeaId(function(id)
       {
-        var url = '/v1/idea/edit/'+id;
+        var url = '/v1/idea/update/'+id;
         var req = request
           .post(url);
         agent.attachCookies(req);
@@ -292,7 +293,7 @@ describe('idea controller', function()
            {
              if (err) throw error;
              shouldBeSuccess(res);
-             var url = '/v1/idea/get/'+id;
+             var url = '/v1/idea/read/'+id;
              var req = request
               .post(url);
               agent.attachCookies(req);
@@ -312,13 +313,13 @@ describe('idea controller', function()
       {
         loginUser(otherUser, function()
         {
-          getFirstIdeaId(function(id)
+          readFirstIdeaId(function(id)
           {
             logoutUser(function()
             {
               loginUser(user, function()
               {
-                var url = '/v1/idea/edit/'+id;
+                var url = '/v1/idea/update/'+id;
                 var req = request
                   .post(url);
                 agent.attachCookies(req);
@@ -338,7 +339,7 @@ describe('idea controller', function()
     it('should fail if idea id invalid', function(done)
     {
       var id = 'x12';
-      var url = '/v1/idea/edit/'+id;
+      var url = '/v1/idea/update/'+id;
       var req = request
         .post(url);
         agent.attachCookies(req);
@@ -361,18 +362,18 @@ describe('idea controller', function()
   })
 
 
-  describe('get ideas', function()
+  describe('read ideas', function()
   {
     before(function(done)
     {
       var req = request
-        .post('/v1/idea/add');
+        .post('/v1/idea/create');
         agent.attachCookies(req);
         req.send({ideaName:idea3.name, ideaContent: idea3.content})
            .end(function(err, res) 
            {
              req = request
-             .post('/v1/idea/add');
+             .post('/v1/idea/create');
              agent.attachCookies(req);
              req.send({ideaName:idea4.name, ideaContent: idea4.content})
              .end(function(err, res)
@@ -382,10 +383,10 @@ describe('idea controller', function()
            });
     })
 
-    it('should get all ideas of the authenticated user', function(done)
+    it('should read all ideas of the authenticated user', function(done)
     {
       var req = request
-        .get('/v1/idea/get');
+        .get('/v1/idea/read');
       agent.attachCookies(req); 
       req.end(function(err, res)
       {
@@ -395,12 +396,12 @@ describe('idea controller', function()
       });
     })
 
-    it('should not get ideas if the user is not authenticated', function(done)
+    it('should not read ideas if the user is not authenticated', function(done)
     {
       var req = request
         .get('/logout');
         req = request
-          .get('/v1/idea/get')
+          .get('/v1/idea/read')
           .end(function(err, res)
         {
           res.text.should.match(/success.*false/);
@@ -419,7 +420,7 @@ describe('idea controller', function()
   })
 
 
-  describe('getIdea', function()
+  describe('readIdea', function()
   {
     before(function(done)
     {
@@ -429,11 +430,11 @@ describe('idea controller', function()
       });
     });        
 
-    it('should get an idea by id', function(done)
+    it('should read an idea by id', function(done)
     {
-      getFirstIdeaId(function(id)
+      readFirstIdeaId(function(id)
       {
-        var url = '/v1/idea/get/'+id;
+        var url = '/v1/idea/read/'+id;
         var req = request
           .get(url);
         agent.attachCookies(req);
@@ -448,7 +449,7 @@ describe('idea controller', function()
     it('should fail if the idea id is invalid', function(done)
     {
       var id = 'x12';
-      var url = '/v1/idea/get/'+id;
+      var url = '/v1/idea/read/'+id;
       var req = request
         .get(url);
         agent.attachCookies(req);
@@ -465,13 +466,13 @@ describe('idea controller', function()
       {
         loginUser(otherUser, function()
         {
-          getFirstIdeaId(function(id)
+          readFirstIdeaId(function(id)
           {
             logoutUser(function()
             {
               loginUser(user, function()
               {
-                var url = '/v1/idea/get/'+id;
+                var url = '/v1/idea/read/'+id;
                 var req = request
                   .get(url);
                 agent.attachCookies(req);
@@ -521,10 +522,10 @@ var shouldBeFailure = function (res)
   res.text.should.match(/success.*false/);
 }
 
-var getFirstIdeaId = function (callback)
+var readFirstIdeaId = function (callback)
 {
   var req = request
-    .get('/v1/idea/get');
+    .get('/v1/idea/read');
   agent.attachCookies(req); 
   req.end(function(err, res)
   {
@@ -549,14 +550,15 @@ var loginUser = function (user, callback)
   });
 }
 
-var addUser = function(user, callback)
+var createUser = function(user, callback)
 {
   var req = request
-    .post('/v1/user/signup')
+    .post('/v1/user/create')
     .send(user)
-    .end(function(err)
+    .end(function(err,res)
     {
       if (err) throw error;
+      shouldBeSuccess(res);
       callback();
     });
 }
@@ -569,29 +571,35 @@ var login = function (request, user, done)
     .end(function (err, res)
     {
       if (err) throw error;
+      shouldBeSuccess(res);
       agent.saveCookies(res);
       done(agent);
     });
 };
 
+
+// create delete 
+
 // delete the currently logged in user
 var deleteUser = function (callback)
 {
+
   var req = request
-    .post('/v1/user/delete');
+    .post('/v1/user/delete'); // remove this should do in db
     agent.attachCookies(req);
-    req.end(function(err)
+    req.end(function(err,res)
     {
       if (err) throw error;
+      shouldBeSuccess(res);
       callback();
     })
 }
 
-// add an idea
-var addIdea = function (idea, callback)
+// create an idea
+var createIdea = function (idea, callback)
 {
   var req = request
-    .post('/v1/idea/add');
+    .post('/v1/idea/create');
   agent.attachCookies(req);
   req.send({ideaName:idea.name, ideaContent: idea.content})
     .end(function(err, res)
@@ -644,15 +652,15 @@ var logoutUser = function(callback)
 
 var setupEditAndGet = function(callback)
 {
-  addIdea(idea1, function()
+  createIdea(idea1, function()
   {
     logoutUser(function()
     {
-      addUser(otherUser, function()
+      createUser(otherUser, function()
       {
         loginUser(otherUser, function()
         {
-          addIdea(idea5, function()
+          createIdea(idea5, function()
           {
             logoutUser(function()
             {
