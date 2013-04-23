@@ -52,7 +52,17 @@ module.exports =
   getSessionHash: function (id)
   {
     return "session:"+id;
-  }
+  },
 
+  printObject: function(obj)
+  {
+    for (var prop in obj)
+    {
+      if (obj.hasOwnProperty(prop))
+      {
+        console.log(prop+':'+obj[prop]);
+      }
+    } 
+  }
 
 };
