@@ -1,7 +1,8 @@
 var app = require('../../app.js'),
     request = require('supertest')(app),
     superagent = require('superagent'),
-    agent = superagent.agent();
+    agent = superagent.agent(),
+    utils = require('../../utils');
 
 /*
  Utility functions used by all integration tests follow.
@@ -10,18 +11,24 @@ var app = require('../../app.js'),
 module.exports =
 {
 
-  shouldBeSuccess: function (res)
+  shouldBeSuccess: function (res, status)
   {
     res.should.be.json;
-    res.statusCode.should.equal(200);
     res.text.should.match(/success.*true/);
+    if (status)
+    {
+      res.statusCode.should.equal(status)
+    }
   },
 
-  shouldBeFailure: function (res)
+  shouldBeFailure: function (res, status)
   {
     res.should.be.json;
-    res.statusCode.should.equal(200);
     res.text.should.match(/success.*false/);
+    if (status)
+    {
+      res.statusCode.should.equal(status)
+    }
   },
   
   readFirstIdeaId: function (callback)
@@ -56,7 +63,6 @@ module.exports =
       });
   },
 
-
   createUser: function(user, callback)
   {
     var req = request
@@ -68,10 +74,9 @@ module.exports =
         callback();
       });
   },
-  
-  
+
   // create delete 
-  
+
   // delete the currently logged in user
   deleteUser: function (callback)
   {
@@ -92,7 +97,7 @@ module.exports =
     var req = request
       .post('/v1/idea/create');
     agent.attachCookies(req);
-    req.send({ideaName:idea.name, ideaContent: idea.content})
+    req.send({title:idea.title, content: idea.content})
       .end(function(err, res)
       {
         callback();

@@ -57,7 +57,7 @@ describe('idea controller', function()
       var req = request
         .post('/v1/idea/create');
         agent.attachCookies(req);
-        req.send({ideaName:idea1.name, ideaContent: idea1.content})
+        req.send({title:idea1.title, content: idea1.content})
            .end(function(err, res) 
            {
              integrationTestUtils.shouldBeSuccess(res);
@@ -71,7 +71,7 @@ describe('idea controller', function()
       var req = request
         .post('/v1/idea/create');
         agent.attachCookies(req);
-        req.send({ideaName:idea1.name, ideaContent: undefined})
+        req.send({title:"", content: undefined})
            .end(function(err, res) 
            {
              integrationTestUtils.shouldBeFailure(res);
@@ -106,7 +106,7 @@ describe('idea controller', function()
         var req = request
           .post(url);
         agent.attachCookies(req);
-        req.send({ideaName:idea2.name, ideaContent: idea2.content})
+        req.send({title:idea2.title, content: idea2.content})
            .end(function(err, res) 
            {
              if (err) throw error;
@@ -117,7 +117,7 @@ describe('idea controller', function()
               agent.attachCookies(req);
               req.end(function(err, res) 
               {
-                res.body.result.name.should.equal(idea2.name);
+                res.body.result.title.should.equal(idea2.title);
                 res.body.result.content.should.equal(idea2.content);
                 done();
               });
@@ -141,7 +141,7 @@ describe('idea controller', function()
                 var req = request
                   .post(url);
                 agent.attachCookies(req);
-                req.send({ideaName:idea1.name, ideaContent: undefined})
+                req.send({title:idea1.title, content: undefined})
                   .end(function(err, res) 
                   {
                     integrationTestUtils.shouldBeFailure(res);
@@ -161,7 +161,7 @@ describe('idea controller', function()
       var req = request
         .post(url);
         agent.attachCookies(req);
-        req.send({ideaName:idea1.name, ideaContent: undefined})
+        req.send({title:idea1.title, content: undefined})
            .end(function(err, res) 
            {
              integrationTestUtils.shouldBeFailure(res);
@@ -187,13 +187,13 @@ describe('idea controller', function()
       var req = request
         .post('/v1/idea/create');
         agent.attachCookies(req);
-        req.send({ideaName:idea3.name, ideaContent: idea3.content})
+        req.send({title:idea3.title, content: idea3.content})
            .end(function(err, res) 
            {
              req = request
              .post('/v1/idea/create');
              agent.attachCookies(req);
-             req.send({ideaName:idea4.name, ideaContent: idea4.content})
+             req.send({title:idea4.title, content: idea4.content})
              .end(function(err, res)
              {
                done();
@@ -295,7 +295,7 @@ describe('idea controller', function()
                 agent.attachCookies(req);
                 req.end(function(err, res) 
                 {
-                  integrationTestUtils.shouldBeFailure(res);
+                  integrationTestUtils.shouldBeFailure(res, 403);
                   done();
                 });
               }); 
@@ -312,12 +312,14 @@ describe('idea controller', function()
         done();
       });
     });
+
   })
 
   after(function(done)
   {
     integrationTestUtils.deleteUser(done);
   })
+
 })
 
 // login a given user and call done

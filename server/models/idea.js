@@ -6,7 +6,7 @@ var Schema = mongoose.Schema;
 // define the ideaSchema
 var ideaSchema = new Schema(
 {
-	name: String,
+	title: String,
 	content: String,
 	userId: String
 });

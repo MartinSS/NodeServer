@@ -10,7 +10,8 @@ var express = require('express'),
     agent = superagent.agent(),
     MongoClient = require('mongodb').MongoClient,
     testUtils = require('../test_utils'),
-    integrationTestUtils = require('./integration_test_utils');
+    integrationTestUtils = require('./integration_test_utils'),
+    utils = require('../../utils');
 
 // used to log users in and track their cookies (using superagent module)
 var agent;
@@ -18,16 +19,15 @@ var agent;
 describe('user controller', function()
 {
 
-  var user;
-  var malUser;
-  var changedUser;
+  var user = testUtils.generateValidUser();
+  var malUser = testUtils.generateInvalidUser();
+  var changedUser = testUtils.generateValidUser();
 
   describe('createUser', function()
   {
-    before(function()
+    before(function(done)
     {
-      user = testUtils.generateValidUser();
-      malUser = testUtils.generateInvalidUser();
+      done();
     })
 
     it('should create a new user if valid information is given', function(done)
@@ -72,7 +72,6 @@ describe('user controller', function()
   {
     before(function(done) 
     {
-      user = testUtils.generateValidUser();
       integrationTestUtils.createUser(user, function()
       {
         loginUser(user, function()
@@ -128,8 +127,6 @@ describe('user controller', function()
 
     before(function(done) 
     {
-      user = testUtils.generateValidUser();
-      changedUser = testUtils.generateValidUser();
       integrationTestUtils.createUser(user, function()
       {
         loginUser(user, function()
@@ -144,7 +141,7 @@ describe('user controller', function()
       var req = request
         .post('/v1/user/update');
         agent.attachCookies(req);
-        req.send({"givenName": changedUser.givenName, "familyName": changedUser.familyName})  
+        req.send({"givenName": changedUser.givenName, "familyName": changedUser.familyName, email: changedUser.email, password: changedUser.password})  
           .end(function(err, res)
           {
             integrationTestUtils.shouldBeSuccess(res);
@@ -165,6 +162,7 @@ describe('user controller', function()
     {
       integrationTestUtils.deleteUser(done);
     })
+
   })
 
 })

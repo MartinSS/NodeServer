@@ -1,13 +1,50 @@
+var passwordChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>!@#$%^&*()_+-=;'\".,/?";
+var nameChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-";
+var topLevelDomains = ['info', 'com', 'org', 'net', 'edu', 'co', 'biz', 'gov', 'mil'];
+
+// generate a random 'name' of length n
+var generateName = function(n)
+{
+  var result = '';
+  for (var i = 0 ; i < n ; i++)
+  {
+    result += nameChars[Math.floor(Math.random()*nameChars.length)];
+  }
+
+  return result;
+}
+
+// generate a random password of length n
+var generatePassword = function(n)
+{
+  var result = '';
+  for (var i = 0 ; i < n ; i++ )
+  {
+    result += passwordChars[Math.floor(Math.random()*passwordChars.length)];
+  }
+
+  return result;
+}
+
+// generate a random 'email' address of name length m and domain length n
+var generateEmailAddress = function(m, n)
+{
+  var result = generateName(m) + '@' + generateName(n) + '.' + topLevelDomains[Math.floor(Math.random()*topLevelDomains.length)];
+
+  return result;
+}
+
+
 module.exports = 
 {
   generateValidUser: function()
   {
     var result =  
     {
-      givenName: Math.random().toString(36).substr(2,Math.random()*15).replace(/\d/g, 'a')+'x',
-      familyName: 'redman',
-      email: Math.random().toString(36).substr(2,Math.random()*15).replace(/\d/g, 'a')+'y@example.com',
-      "password": 'aaaaaa'
+      givenName: generateName(10),
+      familyName: generateName(15),
+      email: generateEmailAddress(7,12),
+      password: generatePassword(11)
     };
 
     return result;
@@ -18,9 +55,9 @@ module.exports =
   {
     var result =  
     {
-      givenName: Math.random().toString(36).substr(2,Math.random()*15).replace(/\d/g, 'a'),
-      email: 'timmy@example.com',
-      "password": 'aaaaaa'
+      familyName: generateName(15),
+      email: generateEmailAddress(7,12),
+      password: generatePassword(11)
     };
 
     return result;
@@ -31,7 +68,7 @@ module.exports =
   {
     var result =
     {
-      name: Math.random().toString(36).substr(2,Math.random()*15).replace(/\d/g, 'a'),
+      title: generateName(25),
       content: words.slice(0,Math.random()*words.length).join(' ')
     };
 

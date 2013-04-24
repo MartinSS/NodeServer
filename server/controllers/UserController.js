@@ -1,6 +1,7 @@
 var User = require('../models/user').User,
     utils = require('../utils'),
-    redis = require('redis');
+    redis = require('redis'),
+    validate = require('./validate');
 
 var redisClient = redis.createClient();
 var signupUrl = "/v1/user/create";
@@ -13,24 +14,37 @@ var userController =
   // this is a signup
   // access with through curl by typing for example: 
   // curl X POST -d "givenName=Brian&familyName=Sonman&password=aaabbb&email=brian@example.com" "http://localhost:8888/v1/user/create"
+  // the following status codes are returned:
+  // 201: resource created if successful
+  // 405: method not allowed if email address already exists
+  // 400: bad request if validation or database access fails
   createUser: function(req, res)
   {
-    if (req.body.givenName!=undefined&&req.body.familyName!=undefined&&req.body.email!=undefined&&req.body.password!=undefined)
+    try
     {
+      var user = validate.createUser(req.body);
+
       new User(
       {
-        givenName: utils.encodeHTML(req.body.givenName),
-        familyName: utils.encodeHTML(req.body.familyName),
-        email: utils.encodeHTML(req.body.email),
-        password: req.body.password
+        givenName: user.givenName,
+        familyName: user.familyName,
+        email: user.email,
+        password: user.password
       }).save(function(err, idea, count)
       {
-        res.json(utils.success({}));
+        if (count) // save was successful
+        {
+          res.json(utils.success({})).status(201);
+        }
+        else
+        { // mongo did not save as email is duplicate
+          res.json(utils.failure('Email address already being used')).status(405);
+        }
       });
     }
-    else
+    catch (err)
     {
-      res.json(utils.failure('Missing or invalid information given for user signup'));
+      res.json(utils.failure(err.message)).status(400);
     }
   },
 
@@ -108,28 +122,30 @@ var userController =
     {
       if (err || !usr )
       {
-        res.json(utils.failure('Error accessing user'));
+        res.json(utils.failure('Error accessing user')).status(500);
       }
       else
       {
-        if (req.body.givenName)
+        try
         {
-          usr.givenName = utils.encodeHTML(req.body.givenName);
+          var user = validate.updateUser(req.body);
+          usr.givenName = user.givenName;
+          usr.familyName = user.familyName;
+          usr.email = user.email;
+          usr.password = user.password;
+
+          usr.save();
+          // update session cache
+
+          var userSessionHash = "session:"+usr._id;
+          redisClient.hmset(userSessionHash, "sessionID", req.sessionID, "email", usr.email,
+            "givenName", usr.givenName)
+          res.json(utils.success({}));
         }
-        if (req.body.familyName)
+        catch (err)
         {
-          usr.familyName = utils.encodeHTML(req.body.familyName);
+          res.json(utils.failure(err.message)).status(400);   
         }
-        if (req.body.password)
-        {
-          usr.password = req.body.password;
-        } 
-        usr.save();
-        // update session cache
-        var userSessionHash = "session:"+usr._id;
-        redisClient.hmset(userSessionHash, "sessionID", req.sessionID, "email", usr.email,
-        "givenName", usr.givenName)
-        res.json(utils.success({}));
       }
     });
   }

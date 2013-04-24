@@ -1,10 +1,10 @@
-var express = require('express'),
+var util = require('util'),
+  express = require('express'),
   config = require('./config'),
   mongo = require('mongodb'),
   mongoose = require('mongoose'),
   redis = require('redis'),
   passport = require('passport'),
-  util = require('util'),
   utils = require('./utils'),
   userController = require('./controllers/UserController.js'),
   ideaController = require('./controllers/IdeaController.js'),
@@ -103,8 +103,8 @@ app.post('/login', passport.authenticate('local'), function(req, res)
             }
           })
         }
-      });
-    }
+     });
+   }
   });
 });
 

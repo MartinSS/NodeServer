@@ -1,5 +1,7 @@
 var Idea = require('../models/idea').Idea,
-    utils = require('../utils');
+    utils = require('../utils'),
+    validate = require('./validate');
+    sanitize = require('./sanitize');
 
 var ideaController =
 {
@@ -8,6 +10,11 @@ var ideaController =
   // return all ideas for user with session
   // on error returns JSON containing error message
   // curl request with cookie set returned by /login: curl -v --cookie "connect.sid=s%3ANM7ESUG23zCuhiEMlXE%2BSgju.WQkr7LTf5Lp3LflLDUskdKNcoWOeLQgMxvUkGYSQMqM; Path=/;" localhost:8888/v1/idea/read/
+  // status codes for response are:
+  //  500 internal server error when accessing db
+  //  204 no content (no ideas found in db)
+  //  200 ok
+
   readIdeas: function (req, res)
   {
     Idea.find(
@@ -15,9 +22,13 @@ var ideaController =
       userId: req.user.email
     }, function(err, ideas)
     {
-      if (err || !ideas)
+      if (err)
       {
-        res.json(utils.failure('Error accessing ideas'));
+        res.json(utils.failure('Error accessing ideas database.')).status(500);
+      }
+      else if (!ideas)
+      {
+        res.json(utils.failure('No ideas found in database.')).status(204);
       }
       else
       {
@@ -53,20 +64,36 @@ var ideaController =
   // expects url parameter with id of idea
   // on error returns JSON containing error message
   // curl -b cookies.txt "http://localhost:8888/v1/idea/read/514a8726a967f4f1774f7baf"
+  // status codes for response are:
+  //  500 internal server error when accessing db
+  //  204 no content (no ideas found in db)
+  //  200 ok
+
   readIdea: function (req, res)
   {
     Idea.findOne(
     {
-      _id: req.params.id, userId: req.user.email
+      _id: req.params.id // , userId: req.user.email
     }, function(err, idea)
     {
-      if (err || !idea)
+      if (err)
       {
-        res.json(utils.failure('Error accessing idea'));
+        res.json(utils.failure('Error accessing idea in database.')).status(500);
+      }
+      else if (!idea)
+      {
+        res.json(utils.failure('Idea not in database.')).status(204);
       }
       else
       {
-        res.json(utils.success(idea));
+        if ( idea.userId != req.user.email ) // not authorized
+        {
+          res.json(utils.failure('Idea not owned by user')).status(403);
+        }
+        else
+        {
+          res.json(utils.success(idea));
+        }
       }
     });
   },
@@ -96,8 +123,6 @@ var ideaController =
   },
 
 
-
-
   
   // handles post /idea
   // create idea for user with session
@@ -105,34 +130,43 @@ var ideaController =
   // on error returns JSON containing error message
   // returns 'Success' message otherwise
   // can be accesssed with  the following curl command:
-  // curl -b cookies.txt -d "ideaName=idea3&ideaContent=consectetur adipisicing elit, sed do eiusmod tempor ncididunt" "http://localhost:8888/api/idea"
+  // curl -b cookies.txt -d "title=idea3&content=consectetur adipisicing elit, sed do eiusmod tempor ncididunt" "http://localhost:8888/api/idea"
+
   createIdea: function (req, res)
   {
-    if (req.body.ideaName!=undefined&&req.body.ideaContent!=undefined)
+    try
     {
+      var reqIdea = validate.createIdea(req.body);
+      reqIdea = sanitize.createIdea(reqIdea); 
+
       var idea = new Idea(
       {
-        name: utils.encodeHTML(req.body.ideaName),
-        content: utils.encodeHTML(req.body.ideaContent),
+        title: reqIdea.title,
+        content: reqIdea.content,
         userId: req.user.email
       });
-
+  
       idea.save(function(err)
       {
-        if (err) res.json(utils.failure('Failure saving data'));
+        if (err)
+        {
+          res.json(utils.failure('Failure saving data')).status(500);
+        }
         Idea.findById(idea, function (err)
         {
-          if (err) res.json(utils.failure('Failure reading data')); 
-          res.json(utils.success({"id": idea._id}));
+          if (err)
+          {
+            res.json(utils.failure('Failure reading data')); 
+          }
+          res.json(utils.success({"id": idea._id})).status(201);
         });
       });
-    }
-    else
-    {
-      res.json(utils.failure('Idea information missing'));
-    }
+     }
+     catch (err)
+     {
+       res.json(utils.failure(err.message)).status(400);
+     }
   },
-
 
 
 
@@ -141,7 +175,7 @@ var ideaController =
   // expects parameters set in body of request with idea data
   // on error returns JSON containing error message
   // returns 'Success' message otherwise
-  // url can be hit by e.g. curl -b cookies.txt -X PUT -d "ideaName=idea4&ideaContent=adipisicing elit, sed do eiusmod tempor inciidunt" "http://localhost:8888/api/idea/5158b50f7a41e34b17000003"
+  // url can be hit by e.g. curl -b cookies.txt -X PUT -d "title=idea4&content=adipisicing elit, sed do eiusmod tempor inciidunt" "http://localhost:8888/api/idea/5158b50f7a41e34b17000003"
             
   updateIdea: function(req, res)
   {
@@ -154,25 +188,29 @@ var ideaController =
       {
         if (!idea)
         {
-          res.json(utils.failure("Can't update a non-existing idea"));
+          res.json(utils.failure("Can't update a non-existing idea")).status(500);
         }
         else
         {
-          res.json(utils.failure('Error occurred accessing session'));
+          res.json(utils.failure('Error occurred accessing session')).status(500);
         }
       }
       else
       {
-        if (req.body.ideaName!=undefined)
+        try
         {
-          idea.name = utils.encodeHTML(req.body.ideaName);
-        }
-        if (req.body.ideaContent!=undefined)
-        {
-          idea.content = utils.encodeHTML(req.body.ideaContent);
-        }
+
+          var reqIdea = validate.createIdea(req.body);
+          reqIdea = sanitize.createIdea(reqIdea); 
+          idea.title = reqIdea.title;
+          idea.content = reqIdea.content;
           idea.save();
           res.json(utils.success({}));
+        }
+        catch (err)
+        {
+          res.json(utils.failure(err.message)).status(400);
+        }
       }
     });
   }

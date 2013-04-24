@@ -9,7 +9,8 @@
     "mongoose": "3.5.x",
     "redis": "0.8.x",
     "passport": "",
-    "passport-local": "0.1.x"
+    "passport-local": "0.1.x",
+    "validator": "1.1.x"
   },
   "devDependencies": {
     "mocha": "1.8.x",
