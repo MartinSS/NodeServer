@@ -24,22 +24,41 @@ var userController =
     try
     {
       var user = validate.createUser(req.body);
-
-      new User(
+      User.findOne(
       {
-        givenName: user.givenName,
-        familyName: user.familyName,
-        email: user.email,
-        password: user.password
-      }).save(function(err, idea, count)
+        email: user.email
+      }, function(err, usr)
       {
-        if (count) // save was successful
+        if (err)
         {
-          res.json(utils.success({})).status(201);
+          res.json(utils.failure('Error accessing user'));
         }
         else
-        { // mongo did not save as email is duplicate
-          res.json(utils.failure('Email address already being used')).status(405);
+        {
+          if (usr) // email already in use
+          {
+            res.json(utils.failure('Email address already being used')).status(405);
+          }
+          else
+          {
+            new User(
+            {
+              givenName: user.givenName,
+              familyName: user.familyName,
+              email: user.email,
+              password: user.password
+            }).save(function(err, idea, count)
+            {
+              if (count) // save was successful
+              {
+                res.json(utils.success({})).status(201);
+              }
+              else
+              { // error writing to database
+                res.json(utils.failure('Error accessing user')).status(500);
+              }
+            }) 
+          }
         }
       });
     }
