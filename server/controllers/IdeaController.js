@@ -41,6 +41,8 @@ var ideaController =
   // delete all ideas for user with session
   // on error returns JSON containing error message
   // curl request with cookie set returned by /login: curl -v --cookie "connect.sid=s%3ANM7ESUG23zCuhiEMlXE%2BSgju.WQkr7LTf5Lp3LflLDUskdKNcoWOeLQgMxvUkGYSQMqM; Path=/;" localhost:8888/v1/idea/delete/
+  //  500 internal server error when accessing db
+  //  400 bad request
   deleteIdeas: function (req, res)
   {
     Idea.remove(
@@ -50,7 +52,7 @@ var ideaController =
     {
       if (err) 
       {
-        res.json(utils.failure('Error deleting ideas'));
+        res.json(utils.failure('Error deleting ideas')).status(400);
       }
       else
       {
@@ -104,6 +106,8 @@ var ideaController =
   // expects url parameter with id of idea
   // on error returns JSON containing error message
   // curl -b cookies.txt "http://localhost:8888/v1/idea/delete/514a8726a967f4f1774f7baf"
+  //  500 internal server error when accessing db
+  //  400 bad request
   deleteIdea: function (req, res)
   {
     Idea.remove(
@@ -113,7 +117,7 @@ var ideaController =
     {
       if (err) 
       {
-        res.json(utils.failure('Error deleting idea'));
+        res.json(utils.failure('Error deleting idea')).status(500);
       }
       else
       {
@@ -131,6 +135,9 @@ var ideaController =
   // returns 'Success' message otherwise
   // can be accesssed with  the following curl command:
   // curl -b cookies.txt -d "title=idea3&content=consectetur adipisicing elit, sed do eiusmod tempor ncididunt" "http://localhost:8888/api/idea"
+  //  500 internal server error when accessing db
+  //  400 bad request
+  //  201 resource created
 
   createIdea: function (req, res)
   {
@@ -156,7 +163,7 @@ var ideaController =
         {
           if (err)
           {
-            res.json(utils.failure('Failure reading data')); 
+            res.json(utils.failure('Failure reading data')).status(500); 
           }
           res.json(utils.success({"id": idea._id})).status(201);
         });
@@ -176,7 +183,10 @@ var ideaController =
   // on error returns JSON containing error message
   // returns 'Success' message otherwise
   // url can be hit by e.g. curl -b cookies.txt -X PUT -d "title=idea4&content=adipisicing elit, sed do eiusmod tempor inciidunt" "http://localhost:8888/api/idea/5158b50f7a41e34b17000003"
-            
+  //  500 internal server error when accessing db
+  //  400 bad request
+  //  201 resource created
+
   updateIdea: function(req, res)
   {
     Idea.findOne(
@@ -188,7 +198,7 @@ var ideaController =
       {
         if (!idea)
         {
-          res.json(utils.failure("Can't update a non-existing idea")).status(500);
+          res.json(utils.failure("Can't update a non-existing idea")).status(400);
         }
         else
         {
@@ -259,12 +269,12 @@ function route(req, res)
         ideaController.updateIdea(req,res);
         break;
       default:
-        res.json(utils.failure('Invalid operation specified'));
+        res.json(utils.failure('Invalid operation specified')).status(400);
     }
   }
   else
   {
-    res.json(utils.failure('No idea operation specified'));
+    res.json(utils.failure('No idea operation specified')).status(400);
   }
 }
 

@@ -19,6 +19,7 @@ var userController =
   // 201: resource created if successful
   // 405: method not allowed if email address already exists
   // 400: bad request if validation or database access fails
+  // 500: server error accessing database
   createUser: function(req, res)
   {
     try
@@ -31,7 +32,7 @@ var userController =
       {
         if (err)
         {
-          res.json(utils.failure('Error accessing user'));
+          res.json(utils.failure('Error accessing user')).status(500);
         }
         else
         {
@@ -73,6 +74,9 @@ var userController =
   // delete profile for user with session
   // access with through curl by typing for example: 
   // curl X POST -d "givenName=Brian&familyName=Sonman&password=aaabbb&email=brian@example.com" "http://localhost:8888/v1/user/delete"
+  // 400: bad request if validation or database access fails
+  // 500: server error accessing database
+
   deleteUser: function(req, res)
   {
 
@@ -83,7 +87,7 @@ var userController =
       if (err)
       {
         console.log("error removing session cache userSessionHash:"+userSessionHash);
-        res.json(utils.failure('error removing session cache'));
+        res.json(utils.failure('error removing session cache')).status(500);
       }
       else
       {
@@ -94,7 +98,7 @@ var userController =
         {
           if (err)
           {
-            res.json(utils.failure('Error deleting user'));
+            res.json(utils.failure('Error deleting user')).status(500);
           }
           else
           {
@@ -106,7 +110,7 @@ var userController =
             {
               if (err)
               {
-                res.json(utils.failure('Error deleting ideas.'));
+                res.json(utils.failure('Error deleting ideas.')).status(500);
               }
               else
               {
@@ -125,6 +129,8 @@ var userController =
   // return profile for user with session
   // access with curl:
   // curl -b cookies.txt "http://localhost:8888/v1/user/read"
+  // 400: bad request if validation or database access fails
+  // 500: server error accessing database
 
   readUser: function(req, res)
   {
@@ -133,9 +139,13 @@ var userController =
       email: req.user.email
     }, function(err, usr)
     {
-      if (err || !usr)
+      if (err)
       {
-        res.json(utils.failure('Error accessing user'));
+        res.json(utils.failure('Error accessing user')).status(500);
+      }
+      else if (!usr)
+      {
+        res.json(utils.failure('User does not exist')).status(400);
       }
       else
       {
@@ -155,9 +165,13 @@ var userController =
       email: req.user.email
     }, function(err, usr)
     {
-      if (err || !usr )
+      if (err)
       {
         res.json(utils.failure('Error accessing user')).status(500);
+      }
+      else if (!usr)
+      {
+        res.json(utils.failure('User does not exist')).status(400);
       }
       else
       {
@@ -212,7 +226,7 @@ function route(req, res)
         userController.deleteUser(req,res);
         break;
       default:
-        res.json(utils.failure('Invalid operation specified'));
+        res.json(utils.failure('Invalid operation specified')).status(400);
     }
   }
   else if (req.url == signupUrl) 
@@ -221,7 +235,7 @@ function route(req, res)
   }
   else
   {
-    res.json(utils.failure('No user operation specified'));
+    res.json(utils.failure('No user operation specified')).status(400);
   }
 }
 

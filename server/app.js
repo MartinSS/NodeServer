@@ -76,7 +76,7 @@ app.post('/login', passport.authenticate('local'), function(req, res)
   {
     if (err)
     {
-      res.json(utils.failure('an error occured getting user from mongo'));
+      res.json(utils.failure('an error occurred getting user from database')).status(500);
     }
     else
     {
@@ -86,7 +86,7 @@ app.post('/login', passport.authenticate('local'), function(req, res)
       {
         if (err) 
         {
-          res.json(utils.failure('Error occurred while getting session from session store'));
+          res.json(utils.failure('Error occurred while getting session from session store')).status(500);
         }
         else
         {
@@ -95,7 +95,7 @@ app.post('/login', passport.authenticate('local'), function(req, res)
           {
             if (err) 
             {
-              res.json(utils.failure('Error occurred while setting time to live on session cache'));
+              res.json(utils.failure('Error occurred while setting time to live on session cache')).status(500);
             }
             else
             {
@@ -120,7 +120,7 @@ app.get('/logout', function(req, res)
   {
     if (err)
     {
-      res.json(utils.failure('error removing session cache'));
+      res.json(utils.failure('error removing session cache')).status(500);
     }
     else
     {
@@ -130,7 +130,7 @@ app.get('/logout', function(req, res)
         if (err)
         {
           console.log("error removing session cache userSessionHash:"+userSessionHash);
-          res.json(utils.failure('error removing session cache'));
+          res.json(utils.failure('error removing session cache')).status(500);
         }
         else
         {
@@ -205,7 +205,7 @@ passport.deserializeUser(function(id, done)
   {
     if (err)
     {
-      res.json(utils.failure('Error occurred while getting session cache from session store'));
+      res.json(utils.failure('Error occurred while getting session cache from session store')).status(500);
     }
     else 
     { 
@@ -256,7 +256,7 @@ function ensureAuthenticated(req, res, next)
   {
     return next();
   }
-  res.json(utils.failure('user not authenticated'));
+  res.json(utils.failure('user not authenticated'))status(401);
 }
 
 
