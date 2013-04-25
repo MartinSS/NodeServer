@@ -1,4 +1,5 @@
 var User = require('../models/user').User,
+    Idea = require('../models/idea').Idea,
     utils = require('../utils'),
     redis = require('redis'),
     validate = require('./validate');
@@ -55,6 +56,7 @@ var userController =
   // curl X POST -d "givenName=Brian&familyName=Sonman&password=aaabbb&email=brian@example.com" "http://localhost:8888/v1/user/delete"
   deleteUser: function(req, res)
   {
+
     // delete session cache
     var userSessionHash = utils.getSessionHash(req.user.id);
     redisClient.del(userSessionHash, function(err)
@@ -77,8 +79,22 @@ var userController =
           }
           else
           {
-            req.logout();
-            res.json(utils.success());
+            // delete ideas of user
+            Idea.remove(
+            {
+              userId: req.user.email
+            }, function(err, ideas)
+            {
+              if (err)
+              {
+                res.json(utils.failure('Error deleting ideas.'));
+              }
+              else
+              {
+                req.logout();
+                res.json(utils.success());
+              }
+            });
           }
         });
       }
