@@ -30,7 +30,6 @@ module.exports =
     return reqBody;
   },
 
-
   // checks inputs to createIdea controller method and throws exception if any
   // the input is invalid any exception thrown is expected to be caught by caller
   createIdea: function (reqBody)
@@ -59,7 +58,6 @@ module.exports =
     return reqBody;
   },
 
-
   // checks inputs to loginUser controller and throws exception if any
   // the input is invalid any exception thrown is expected to be caught by caller
   loginUser: function (reqBody)
@@ -69,6 +67,5 @@ module.exports =
 
     return reqBody;
   }
-
 
 };

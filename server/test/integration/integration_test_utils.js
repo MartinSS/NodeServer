@@ -2,13 +2,16 @@ var app = require('../../app.js'),
     request = require('supertest')(app),
     superagent = require('superagent'),
     agent = superagent.agent(),
-    utils = require('../../utils');
+    utils = require('../../utils'),
+    should = require('should');
 
 /*
  Utility functions used by all integration tests follow.
 */
 
-module.exports =
+
+
+var integrationUtils =
 {
 
   shouldBeSuccess: function (res, status)
@@ -40,6 +43,7 @@ module.exports =
     {
       if (res.body.result.length > 0)
       {
+        integrationUtils.shouldBeSuccess(res,200);
         callback(res.body.result[0]._id);
       }
       else
@@ -48,7 +52,6 @@ module.exports =
       }
     });
   },
-  
 
   login: function (request, user, done)
   { 
@@ -59,6 +62,7 @@ module.exports =
       {
         if (err) throw error;
         agent.saveCookies(res);
+        integrationUtils.shouldBeSuccess(res,200);
         done(agent);
       });
   },
@@ -71,6 +75,7 @@ module.exports =
       .end(function(err,res)
       {
         if (err) throw error;
+        integrationUtils.shouldBeSuccess(res,201);
         callback();
       });
   },
@@ -87,6 +92,7 @@ module.exports =
       req.end(function(err,res)
       {
         if (err) throw error;
+        integrationUtils.shouldBeSuccess(res,200);
         callback();
       })
   },
@@ -100,6 +106,7 @@ module.exports =
     req.send({title:idea.title, content: idea.content})
       .end(function(err, res)
       {
+        integrationUtils.shouldBeSuccess(res,201);
         callback();
       });
   },
@@ -113,6 +120,7 @@ module.exports =
     req.end(function(err, res) 
     {
       if (err) throw error;
+      integrationUtils.shouldBeSuccess(res,200);
       done();
     });
   },
@@ -124,9 +132,10 @@ module.exports =
     var req = request
       .post(url);
       agent.attachCookies(req);
-      req.end(function(err)
+      req.end(function(err, res)
       {
         if (err) throw error;
+        integrationUtils.shouldBeSuccess(res,200);
       });
     callback();
   },
@@ -138,11 +147,15 @@ module.exports =
     var req = request
       .get('/logout');
     agent.attachCookies(req);
-    req.end(function(err)
+    req.end(function(err, res)
     {
       if (err) throw error;
+      integrationUtils.shouldBeSuccess(res,200);
     });
   
     callback();
   }
 };
+
+
+module.exports = integrationUtils;

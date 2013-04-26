@@ -38,7 +38,7 @@ describe('user controller', function()
           .end(function(err, res)
           {
             if (err) throw error;
-            integrationTestUtils.shouldBeSuccess(res);
+            integrationTestUtils.shouldBeSuccess(res, 201);
             done();
           })
     })
@@ -55,7 +55,7 @@ describe('user controller', function()
         .send(malUser)  
           .end(function(err, res)
           {
-            integrationTestUtils.shouldBeFailure(res);
+            integrationTestUtils.shouldBeFailure(res, 400);
             done();
           })
     })
@@ -91,9 +91,9 @@ describe('user controller', function()
         .end(function(err, res)
         {
           if (err) return done(err);
-          res.text.should.match(/success.*true/);
           var re = new RegExp(user.givenName+".*");
           res.text.should.match(re);
+          integrationTestUtils.shouldBeSuccess(res, 200);
           done();
         })
     })
@@ -106,7 +106,7 @@ describe('user controller', function()
           .get('/v1/user/read')
           .end(function(err, res)
         {
-          res.text.should.match(/success.*false/);
+          integrationTestUtils.shouldBeFailure(res, 401);
           done();
         })
     })
@@ -144,7 +144,7 @@ describe('user controller', function()
         req.send({"givenName": changedUser.givenName, "familyName": changedUser.familyName, email: changedUser.email, password: changedUser.password})  
           .end(function(err, res)
           {
-            integrationTestUtils.shouldBeSuccess(res);
+            integrationTestUtils.shouldBeSuccess(res, 200);
             // check content changed
             req = request
             .get('/v1/user/read');
@@ -153,6 +153,7 @@ describe('user controller', function()
             {
               res.body.result.givenName.should.equal(changedUser.givenName);
               res.body.result.familyName.should.equal(changedUser.familyName);
+              integrationTestUtils.shouldBeSuccess(res, 200);
             })
             done();
           });

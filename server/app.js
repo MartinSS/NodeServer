@@ -256,7 +256,7 @@ function ensureAuthenticated(req, res, next)
   {
     return next();
   }
-  res.json(utils.failure('user not authenticated'))status(401);
+  res.json(utils.failure('user not authenticated')).status(401);
 }
 
 

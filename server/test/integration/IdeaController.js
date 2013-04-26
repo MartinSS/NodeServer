@@ -60,7 +60,7 @@ describe('idea controller', function()
         req.send({title:idea1.title, content: idea1.content})
            .end(function(err, res) 
            {
-             integrationTestUtils.shouldBeSuccess(res);
+             integrationTestUtils.shouldBeSuccess(res, 201);
              ideaId = res.body.result.id;
              done();
            });
@@ -74,7 +74,7 @@ describe('idea controller', function()
         req.send({title:"", content: undefined})
            .end(function(err, res) 
            {
-             integrationTestUtils.shouldBeFailure(res);
+             integrationTestUtils.shouldBeFailure(res, 400);
              done();
            });
     });
@@ -110,7 +110,7 @@ describe('idea controller', function()
            .end(function(err, res) 
            {
              if (err) throw error;
-             integrationTestUtils.shouldBeSuccess(res);
+             integrationTestUtils.shouldBeSuccess(res, 200);
              var url = '/v1/idea/read/'+id;
              var req = request
               .post(url);
@@ -119,6 +119,7 @@ describe('idea controller', function()
               {
                 res.body.result.title.should.equal(idea2.title);
                 res.body.result.content.should.equal(idea2.content);
+                integrationTestUtils.shouldBeSuccess(res, 200);
                 done();
               });
            });
@@ -144,7 +145,7 @@ describe('idea controller', function()
                 req.send({title:idea1.title, content: undefined})
                   .end(function(err, res) 
                   {
-                    integrationTestUtils.shouldBeFailure(res);
+                    integrationTestUtils.shouldBeFailure(res, 400);
                     done();
                   });
               });
@@ -164,7 +165,7 @@ describe('idea controller', function()
         req.send({title:idea1.title, content: undefined})
            .end(function(err, res) 
            {
-             integrationTestUtils.shouldBeFailure(res);
+             integrationTestUtils.shouldBeFailure(res, 400);
              done();
            });
     });
@@ -196,6 +197,7 @@ describe('idea controller', function()
              req.send({title:idea4.title, content: idea4.content})
              .end(function(err, res)
              {
+               integrationTestUtils.shouldBeSuccess(res, 201);
                done();
              });
            });
@@ -209,7 +211,7 @@ describe('idea controller', function()
       req.end(function(err, res)
       {
         res.body.result.length.should.equal(2);
-        integrationTestUtils.shouldBeSuccess(res);
+        integrationTestUtils.shouldBeSuccess(res, 200);
         done();
       });
     })
@@ -222,7 +224,7 @@ describe('idea controller', function()
           .get('/v1/idea/read')
           .end(function(err, res)
         {
-          res.text.should.match(/success.*false/);
+          integrationTestUtils.shouldBeFailure(res, 401);
           loginUser(user, function()
           {
             done();
@@ -257,7 +259,7 @@ describe('idea controller', function()
         agent.attachCookies(req);
         req.end(function(err, res) 
         {
-          integrationTestUtils.shouldBeSuccess(res);
+          integrationTestUtils.shouldBeSuccess(res, 200);
           done();
         });
       });
@@ -272,7 +274,7 @@ describe('idea controller', function()
         agent.attachCookies(req);
         req.end(function(err, res) 
         {
-          integrationTestUtils.shouldBeFailure(res);
+          integrationTestUtils.shouldBeFailure(res, 500);
           done();
         });
     })
