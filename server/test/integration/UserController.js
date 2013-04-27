@@ -8,7 +8,6 @@ var express = require('express'),
     should = require('should'),
     superagent = require('superagent'),
     agent = superagent.agent(),
-    MongoClient = require('mongodb').MongoClient,
     testUtils = require('../test_utils'),
     integrationTestUtils = require('./integration_test_utils'),
     utils = require('../../utils');
@@ -86,9 +85,7 @@ describe('user controller', function()
       var req = request
         .get('/v1/user/read');
         agent.attachCookies(req);
-        req.expect(200)
-        .expect('Content-Type', /json/)
-        .end(function(err, res)
+        req.end(function(err, res)
         {
           if (err) return done(err);
           var re = new RegExp(user.givenName+".*");

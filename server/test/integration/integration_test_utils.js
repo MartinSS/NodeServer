@@ -10,7 +10,6 @@ var app = require('../../app.js'),
 */
 
 
-
 var integrationUtils =
 {
 
@@ -136,8 +135,8 @@ var integrationUtils =
       {
         if (err) throw error;
         integrationUtils.shouldBeSuccess(res,200);
+        callback();
       });
-    callback();
   },
   
   logoutUser: function(callback)
@@ -151,9 +150,8 @@ var integrationUtils =
     {
       if (err) throw error;
       integrationUtils.shouldBeSuccess(res,200);
+      callback();
     });
-  
-    callback();
   }
 };
 

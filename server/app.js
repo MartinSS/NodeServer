@@ -112,6 +112,11 @@ app.post('/login', passport.authenticate('local'), function(req, res)
 // finds and removes any session hash and logs user out
 app.get('/logout', function(req, res)
 {
+  if (!req.user)
+  {
+    return res.json(utils.failure('User not authenticated.')).status(401);
+  }
+
   // remove session hash
   User.findOne(
   {
@@ -214,7 +219,7 @@ passport.deserializeUser(function(id, done)
         User.findOne(
         {
           _id: id
-        }, function (err, user)
+        }, function (err, usr)
         {
           var userSessionHash = utils.getSessionHash(usr._id);
           // note that we can save the sessionID if needed in the user's db document 
