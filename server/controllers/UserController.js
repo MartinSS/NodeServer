@@ -38,7 +38,7 @@ var userController =
         {
           if (usr) // email already in use
           {
-            res.json(utils.failure('Email address already being used')).status(405);
+            res.json(utils.failure('Email address already being used')).status(400);
           }
           else
           {

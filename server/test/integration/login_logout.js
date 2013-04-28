@@ -241,7 +241,7 @@ var tearDown = function(callback)
   {
     integrationTestUtils.deleteIdeas(function()
     {
-      integrationTestUtils.deleteUser(function()
+      integrationTestUtils.deleteUserFromDB(user, function()
       {
         callback();
       });

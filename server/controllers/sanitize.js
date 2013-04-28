@@ -10,7 +10,7 @@ module.exports =
   {
 
     // escape %, <, >, and "
-    sanitize(reqBody.content).escape();
+    reqBody.content = sanitize(reqBody.content).entityEncode();
 
     return reqBody;
   },
@@ -20,7 +20,7 @@ module.exports =
   {
 
     // escape %, <, >, and "
-    sanitize(reqBody.content).escape();
+    reqBody.content = sanitize(reqBody.content).entityEncode();
 
     return reqBody;
   }

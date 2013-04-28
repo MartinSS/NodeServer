@@ -19,8 +19,8 @@ describe('user controller', function()
 {
 
   var user = testUtils.generateValidUser();
-  var malUser = testUtils.generateInvalidUser();
   var changedUser = testUtils.generateValidUser();
+  var malUser;
 
   describe('createUser', function()
   {
@@ -47,21 +47,93 @@ describe('user controller', function()
       loginUser(user,done);
     })
 
-    it('should not attempt to create a user if insufficient information provided', function(done)
+    it('should not attempt to create a user if givenName not provided', function(done)
     {
-      var req = request
-        .post('/v1/user/create')
-        .send(malUser)  
-          .end(function(err, res)
-          {
-            integrationTestUtils.shouldBeFailure(res, 400);
-            done();
-          })
+      malUser = testUtils.generateValidUser();
+      malUser.givenName = undefined;
+      caseInvalidCreate(malUser, function()
+      {
+        done();
+      });
+    })
+
+    it('should not attempt to create a user if givenName is empty string', function(done)
+    {
+      malUser = testUtils.generateValidUser();
+      malUser.givenName = "";
+      caseInvalidCreate(malUser, function()
+      {
+        done();
+      });
+    })
+
+    it('should not attempt to create a user if familyName not provided', function(done)
+    {
+      malUser = testUtils.generateValidUser();
+      malUser.familyName = undefined;
+      caseInvalidCreate(malUser, function()
+      {
+        done();
+      });
+    })
+
+    it('should not attempt to create a user if email not provided', function(done)
+    {
+      malUser = testUtils.generateValidUser();
+      malUser.email = undefined;
+      caseInvalidCreate(malUser, function()
+      {
+        done();
+      });
+    })
+
+    it('should not attempt to create a user if email is invalid', function(done)
+    {
+      malUser = testUtils.generateValidUser();
+      malUser.email = "eca2222yyyyg";
+      caseInvalidCreate(malUser, function()
+      {
+        done();
+      });
+    })
+
+
+    it('cannnot create a user if email is duplicate', function(done)
+    {
+      malUser = testUtils.generateValidUser();
+      malUser.email = user.email;
+      caseInvalidCreate(malUser, function()
+      {
+        done();
+      });
+    })
+
+    it('should not attempt to create a user if password not provided', function(done)
+    {
+      malUser = testUtils.generateValidUser();
+      malUser.password = undefined;
+      caseInvalidCreate(malUser, function()
+      {
+        done();
+      });
+    })
+
+    it('should not attempt to create a user if password is invalid', function(done)
+    {
+      malUser = testUtils.generateValidUser();
+      malUser.password = "aaa";  // invalid as has less than eight characters
+      caseInvalidCreate(malUser, function()
+      {
+        done();
+      });
     })
 
     after(function(done)
     {
-      integrationTestUtils.deleteUser(done);
+      integrationTestUtils.deleteUserFromDB(user, function()
+      {
+        done();
+      });
     })
 
   })
@@ -110,7 +182,7 @@ describe('user controller', function()
 
     after(function(done)
     {
-      integrationTestUtils.deleteUser(function()
+      integrationTestUtils.deleteUserFromDB(user, function()
       {
         done();
       });
@@ -156,9 +228,89 @@ describe('user controller', function()
           });
     })
 
+
+    it('should update a user which can successfully login', function(done)
+    {
+      loginUser(changedUser,done);
+    })
+
+    it('should not attempt to update a user if givenName not provided', function(done)
+    {
+      malUser = testUtils.generateValidUser();
+      malUser.givenName = undefined;
+      caseInvalidUpdate(malUser, function()
+      {
+        done();
+      });
+    })
+
+    it('should not attempt to update a user if givenName is empty string', function(done)
+    {
+      malUser = testUtils.generateValidUser();
+      malUser.givenName = "";
+      caseInvalidUpdate(malUser, function()
+      {
+        done();
+      });
+    })
+
+    it('should not attempt to update a user if familyName not provided', function(done)
+    {
+      malUser = testUtils.generateValidUser();
+      malUser.familyName = undefined;
+      caseInvalidUpdate(malUser, function()
+      {
+        done();
+      });
+    })
+
+    it('should not attempt to update a user if email not provided', function(done)
+    {
+      malUser = testUtils.generateValidUser();
+      malUser.email = undefined;
+      caseInvalidUpdate(malUser, function()
+      {
+        done();
+      });
+    })
+
+    it('should not attempt to update a user if email is invalid', function(done)
+    {
+      malUser = testUtils.generateValidUser();
+      malUser.email = "eca2222yyyyg";
+      caseInvalidUpdate(malUser, function()
+      {
+        done();
+      });
+    })
+
+    it('should not attempt to update a user if password not provided', function(done)
+    {
+      malUser = testUtils.generateValidUser();
+      malUser.password = undefined;
+      caseInvalidUpdate(malUser, function()
+      {
+        done();
+      });
+    })
+
+    it('should not attempt to update a user if password is invalid', function(done)
+    {
+      malUser = testUtils.generateValidUser();
+      malUser.password = "aaa";  // invalid as has less than eight characters
+      caseInvalidUpdate(malUser, function()
+      {
+        done();
+      });
+    })
+
+
     after(function(done)
     {
-      integrationTestUtils.deleteUser(done);
+      integrationTestUtils.deleteUserFromDB(changedUser, function()
+      {
+        done();         
+      });
     })
 
   })
@@ -174,4 +326,31 @@ var loginUser = function (user, callback)
     callback();
   });
 }
+
+
+var caseInvalidCreate = function (user, callback)
+{
+  var req = request
+    .post('/v1/user/create')
+    .send(user)  
+    .end(function(err, res)
+    {
+      integrationTestUtils.shouldBeFailure(res, 400);
+      callback();
+    });
+}
+
+
+var caseInvalidUpdate = function (user, callback)
+{
+  var req = request
+    .post('/v1/user/update')
+    .send(user)  
+    .end(function(err, res)
+    {
+      integrationTestUtils.shouldBeFailure(res, 401);
+      callback();
+    });
+}
+
 

@@ -3,6 +3,8 @@ var app = require('../../app.js'),
     superagent = require('superagent'),
     agent = superagent.agent(),
     utils = require('../../utils'),
+    User = require('../../models/user').User,
+    Idea = require('../../models/idea').Idea,
     should = require('should');
 
 /*
@@ -95,6 +97,47 @@ var integrationUtils =
         callback();
       })
   },
+
+
+  // delete the currently logged in user directly from db
+  deleteUserFromDB: function (user, callback)
+  {
+    User.findOne(
+    {
+      email: user.email
+    }, function(err, usr)
+    {
+      if (err) throw "Error in deleteUserFromDB finding user";
+      if (!usr) throw "No user found in deleteUserFromDB";
+      integrationUtils.logoutUser(function()
+      {
+        User.remove(
+        {
+          email: user.email
+        }, function(err)
+        {
+          if (err) throw "Error in deleteUserFromDB removing user";
+          else
+          {
+            // delete ideas of user
+            Idea.remove(
+            {
+              userId: user.email
+            }, function(err, ideas)
+            {
+              if (err) throw "Error in deleteUserFromDB removing ideas of user";
+              else
+              {
+                callback();
+              }
+            });
+          }
+        });
+      });
+    });
+  },
+
+
   
   // create an idea
   createIdea: function (idea, callback)
@@ -157,3 +200,14 @@ var integrationUtils =
 
 
 module.exports = integrationUtils;
+
+
+
+
+
+
+
+
+
+
+

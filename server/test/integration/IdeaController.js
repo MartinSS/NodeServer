@@ -46,7 +46,7 @@ describe('idea controller', function()
   describe('create idea', function()
   {
 
-    var ideaId;
+    var ideaId, ideaId2;
     before(function(done)
     {
       done();
@@ -79,9 +79,64 @@ describe('idea controller', function()
            });
     });
 
+    it('should not create an idea if title contains special characters', function(done)
+    {
+      var req = request
+        .post('/v1/idea/create');
+        agent.attachCookies(req);
+        req.send({title:"< script x", content: undefined})
+           .end(function(err, res) 
+           {
+             integrationTestUtils.shouldBeFailure(res, 400);
+             done();
+           });
+    });
+
+
+    it('should create an idea if either the title or content has one character', function(done)
+    {
+      var req = request
+        .post('/v1/idea/create');
+        agent.attachCookies(req);
+        req.send({title:" ", content: undefined})
+           .end(function(err, res) 
+           {
+             integrationTestUtils.shouldBeSuccess(res, 201);
+             ideaId2 = res.body.result.id;
+             done();
+           });
+    });
+
+    it('should create and encode an idea if the body contains malicious characters but they will be encoded', function(done)
+    {
+      var req = request
+        .post('/v1/idea/create');
+        agent.attachCookies(req);
+        req.send({title:"", content: "<"})
+          .end(function(err, res) 
+          {
+            integrationTestUtils.shouldBeSuccess(res, 201);
+            ideaId2 = res.body.result.id;
+            var url = '/v1/idea/read/'+ideaId2;
+            var req = request
+             .get(url)
+            agent.attachCookies(req);
+            req.end(function(err,res)
+            {
+              integrationTestUtils.shouldBeSuccess(res, 200);
+              res.body.result.content.should.equal("&lt;"); 
+              done();
+            });
+          });
+    });
+
+
     after(function(done)
     {
-      integrationTestUtils.deleteIdea(ideaId,done);
+      integrationTestUtils.deleteIdea(ideaId, function()
+      {
+        integrationTestUtils.deleteIdea(ideaId2,done);
+      });
     })
 
   })
@@ -90,6 +145,7 @@ describe('idea controller', function()
   describe('updateIdea', function()
   {
 
+    var ideaId2;
     before(function(done)
     {
       setupEditAndGet(function()
@@ -125,6 +181,70 @@ describe('idea controller', function()
            });
         });
     })
+
+    it('should not update an idea if title contains special characters', function(done)
+    {
+
+      integrationTestUtils.readFirstIdeaId(function(id)
+      {
+        var url = '/v1/idea/update/'+id;
+        var req = request
+          .post(url);
+        agent.attachCookies(req);
+        req.send({title:"<script>", content: idea2.content})
+           .end(function(err, res) 
+           {
+             if (err) throw error;
+             integrationTestUtils.shouldBeFailure(res, 400);
+             done();
+           });
+      });
+    });
+
+
+    it('should update an idea if either the title or content has one character', function(done)
+    {
+      integrationTestUtils.readFirstIdeaId(function(id)
+      {
+        var url = '/v1/idea/update/'+id;
+        var req = request
+          .post(url);
+        agent.attachCookies(req);
+        req.send({title:" ", content: undefined})
+           .end(function(err, res) 
+           {
+             integrationTestUtils.shouldBeSuccess(res, 200);
+             ideaId2 = res.body.result.id;
+             done();
+           });
+        });
+    });
+
+    it('should update and encode an idea if the body contains malicious characters but they will be encoded', function(done)
+    {
+      integrationTestUtils.readFirstIdeaId(function(id)
+      {
+        var url = '/v1/idea/update/'+id;
+        var req = request
+          .post(url);
+        agent.attachCookies(req);
+        req.send({title:"", content: "<"})
+          .end(function(err, res) 
+          {
+            integrationTestUtils.shouldBeSuccess(res, 200);
+            var url = '/v1/idea/read/'+id;
+            var req = request
+             .get(url)
+            agent.attachCookies(req);
+            req.end(function(err,res)
+            {
+              integrationTestUtils.shouldBeSuccess(res, 200);
+              res.body.result.content.should.equal("&lt;"); 
+              done();
+            });
+          });
+       });
+    });
 
     it('should not update an idea of other user', function(done)
     {
@@ -319,7 +439,10 @@ describe('idea controller', function()
 
   after(function(done)
   {
-    integrationTestUtils.deleteUser(done);
+    integrationTestUtils.deleteUserFromDB(user, function()
+    {
+      done();
+    });
   })
 
 })
@@ -370,7 +493,7 @@ var breakdownEditAndGet = function(callback)
       {
         integrationTestUtils.deleteIdeas(function()
         {
-          integrationTestUtils.deleteUser(function()
+          integrationTestUtils.deleteUserFromDB(otherUser, function()
           {
             loginUser(user, function()
             {

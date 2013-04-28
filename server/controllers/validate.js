@@ -1,6 +1,7 @@
-var check = require('validator').check,
+var Validator = require('validator'),
+    check = Validator.check,
     utils = require('../utils');
-
+// var check = require('validator').check,
 
 // exports module for validation of all controller requests with persistable inputs
 module.exports = 
@@ -12,8 +13,8 @@ module.exports =
   {
     check(reqBody.givenName, 'Please enter a given name between 1 and 50 characters.').len(1,50);
     check(reqBody.familyName, 'Please enter a family name between 1 and 200 characters.').len(1,200);
-    check(reqBody.email, 'Please enter a valid email address.').len(6,64).isEmail;
-    check(reqBody.password, 'Please a password between 8 and 20 characters.').len(8,20).isEmail;
+    check(reqBody.email, 'Please enter a valid email address.').len(6,64).isEmail();
+    check(reqBody.password, 'Please a password between 8 and 20 characters.').len(8,20);
 
     return reqBody;
   },
@@ -24,8 +25,8 @@ module.exports =
   {
     check(reqBody.givenName, 'Please enter a given name between 1 and 50 characters.').len(1,50);
     check(reqBody.familyName, 'Please enter a family name between 1 and 200 characters.').len(1,200);
-    check(reqBody.email, 'Please enter a valid new email address.').len(6,64).isEmail;
-    check(reqBody.password, 'Please a password between 8 and 20 characters.').len(8,20).isEmail;
+    check(reqBody.email, 'Please enter a valid new email address.').len(6,64).isEmail();
+    check(reqBody.password, 'Please a password between 8 and 20 characters.').len(8,20);
 
     return reqBody;
   },
@@ -39,7 +40,10 @@ module.exports =
       throw 'Either idea title or content must be non-empty to create new idea.';
     }
 
-    check(reqBody.title, 'Please enter a valid title containing no special characters.').is(/^[^<>]+$/);
+    if (reqBody.title && reqBody.title.length > 0)
+    {
+      check(reqBody.title, 'Please enter a valid title containing no special characters.').is(/^[^<>]+$/);
+    }
 
     return reqBody;
   },
@@ -53,7 +57,10 @@ module.exports =
       throw 'Either idea title or content must be non-empty to update idea.';
     }
 
-    check(reqBody.title, 'Please enter a valid title containing no special characters.').is(/^[^<>]+$/);
+    if (reqBody.title && reqBody.title.length > 0)
+    {
+      check(reqBody.title, 'Please enter a valid title containing no special characters.').is(/^[^<>]+$/);
+    }
 
     return reqBody;
   },
@@ -62,8 +69,8 @@ module.exports =
   // the input is invalid any exception thrown is expected to be caught by caller
   loginUser: function (reqBody)
   {
-    check(reqBody.email, 'Please enter a valid email address.').len(6,64).isEmail;
-    check(reqBody.password, 'Please a password between 8 and 20 characters.').len(8,20).isEmail;
+    check(reqBody.email, 'Please enter a valid email address.').len(6,64).isEmail();
+    check(reqBody.password, 'Please a password between 8 and 20 characters.').len(8,20);
 
     return reqBody;
   }
