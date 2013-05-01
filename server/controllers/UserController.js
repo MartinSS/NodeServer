@@ -2,7 +2,10 @@ var User = require('../models/user').User,
     Idea = require('../models/idea').Idea,
     utils = require('../utils'),
     redis = require('redis'),
-    validate = require('./validate');
+    validate = require('./validate'),
+    bcrypt = require('bcrypt');
+
+var WORK_FACTOR = 10;
 
 var redisClient = redis.createClient();
 var signupUrl = "/v1/user/create";
@@ -42,23 +45,28 @@ var userController =
           }
           else
           {
-            new User(
+            bcrypt.hash(user.password, WORK_FACTOR, function(err, hash)
             {
-              givenName: user.givenName,
-              familyName: user.familyName,
-              email: user.email,
-              password: user.password
-            }).save(function(err, idea, count)
-            {
-              if (count) // save was successful
+              if (err) throw 'Error creating password hash';
+              console.log("######## computed bcrypt hash: "+hash);
+              new User(
               {
-                res.json(utils.success({})).status(201);
-              }
-              else
-              { // error writing to database
-                res.json(utils.failure('Error accessing user')).status(500);
-              }
-            }) 
+                givenName: user.givenName,
+                familyName: user.familyName,
+                email: user.email,
+                password: hash
+              }).save(function(err, idea, count)
+              {
+                if (count) // save was successful
+                {
+                  res.json(utils.success({})).status(201);
+                }
+                else
+                { // error writing to database
+                  res.json(utils.failure('Error accessing user')).status(500);
+                }
+              }) 
+            });
           }
         }
       });
@@ -182,18 +190,20 @@ var userController =
         try
         {
           var user = validate.updateUser(req.body);
-          usr.givenName = user.givenName;
-          usr.familyName = user.familyName;
-          usr.email = user.email;
-          usr.password = user.password;
-
-          usr.save();
-          // update session cache
-
-          var userSessionHash = "session:"+usr._id;
-          redisClient.hmset(userSessionHash, "sessionID", req.sessionID, "email", usr.email,
+          bcrypt.hash(user.password, WORK_FACTOR, function(err, hash)
+          {
+            if (err) throw new Error("Error creating password hash function");
+            usr.givenName = user.givenName;
+            usr.familyName = user.familyName;
+            usr.email = user.email;
+            usr.password = hash;
+            usr.save();
+            // update session cache
+            var userSessionHash = "session:"+usr._id;
+            redisClient.hmset(userSessionHash, "sessionID", req.sessionID, "email", usr.email,
             "givenName", usr.givenName)
-          res.json(utils.success({}));
+            res.json(utils.success({}));
+          });
         }
         catch (err)
         {

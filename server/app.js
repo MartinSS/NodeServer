@@ -5,6 +5,7 @@ var util = require('util'),
   mongoose = require('mongoose'),
   redis = require('redis'),
   passport = require('passport'),
+  bcrypt = require('bcrypt'),
   utils = require('./utils'),
   userController = require('./controllers/UserController.js'),
   ideaController = require('./controllers/IdeaController.js'),
@@ -129,10 +130,11 @@ app.get('/logout', function(req, res)
     }
     else
     {
+        // todo check if error occurs trying to delete none-existing session cache
       var userSessionHash = utils.getSessionHash(user._id); 
       redisClient.del(userSessionHash, function(err)
       {
-        if (err)
+        if (err)   // in fact user should be able to logout!
         {
           console.log("error removing session cache userSessionHash:"+userSessionHash);
           res.json(utils.failure('error removing session cache')).status(500);
@@ -179,17 +181,23 @@ passport.use(new LocalStrategy(
           message: 'Unknown user ' + usernameField
         });
       }
-      else if (usr.password != passwordField)
+      else
       {
-        console.log('Invalid password');
-        return done(null, false,
+        bcrypt.compare(passwordField, usr.password, function(err, res)
         {
-          message: 'Invalid password'
+          if (!res)
+          {
+            console.log('Invalid password');
+            return done(null, false,
+            {
+              message: 'Invalid password'
+            });
+          }
+          else  // found a matching user and password
+          {
+            return done(null, usr);
+          }
         });
-      }
-      else  // found a matching user and password
-      {
-        return done(null, usr);
       }
     }
   });
@@ -202,6 +210,9 @@ passport.serializeUser(function(user, done)
 });
 
 
+
+
+// todo describe this process step-by-step, and verify the steps
 // test this not when not logged in
 passport.deserializeUser(function(id, done)
 {
