@@ -79,9 +79,10 @@ var userController =
 
   deleteUser: function(req, res)
   {
-
-    // delete session cache
     var userSessionHash = utils.getSessionHash(req.user.id);
+    var email = req.user.email;
+    req.logout();
+    // delete session cache
     redisClient.del(userSessionHash, function(err)
     {
       if (err)
@@ -91,30 +92,33 @@ var userController =
       }
       else
       {
-        User.remove(
+        // delete ideas of user
+        Idea.remove(
         {
-          email: req.user.email
-        }, function(err)
+          'userId': email
+        }, function(err, ideas)
         {
           if (err)
           {
-            res.json(utils.failure('Error deleting user')).status(500);
+            res.json(utils.failure('Error deleting ideas.')).status(500);
           }
           else
           {
-            // delete ideas of user
-            Idea.remove(
+            User.remove(
             {
-              userId: req.user.email
-            }, function(err, ideas)
+              "email": email
+            }, function(err)
             {
               if (err)
               {
-                res.json(utils.failure('Error deleting ideas.')).status(500);
+                // todo:
+                // create generic responnse
+                res.json(utils.failure('Error deleting user')).status(500);
               }
               else
               {
-                req.logout();
+                // todo:
+                // remove data, logout,, remove user
                 res.json(utils.success());
               }
             });
