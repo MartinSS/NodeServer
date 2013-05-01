@@ -48,7 +48,6 @@ var userController =
             bcrypt.hash(user.password, WORK_FACTOR, function(err, hash)
             {
               if (err) throw 'Error creating password hash';
-              console.log("######## computed bcrypt hash: "+hash);
               new User(
               {
                 givenName: user.givenName,
