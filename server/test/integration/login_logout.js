@@ -12,7 +12,7 @@ var express = require('express'),
     redisClient = redis.createClient();
     User = require('../../models/user').User,
     testUtils = require('../test_utils'),
-    integrationTestUtils = require('./integration_test_utils'),
+    integrationTestUtils = require('../integration_test_utils'),
     utils = require('../../utils');
 
 // used to log users in and track their cookies (using superagent module)

@@ -9,14 +9,15 @@ var express = require('express'),
     superagent = require('superagent'),
     agent = superagent.agent(),
     MongoClient = require('mongodb').MongoClient,
+    utils = require('../../utils'),
     testUtils = require('../test_utils'),
-    integrationTestUtils = require('./integration_test_utils');
+    integrationTestUtils = require('../integration_test_utils');
 
 // used to log users in and track their cookies (using superagent module)
-var agent;
+var testAgent;
 
 // valid users
-var user, otherUser;
+var testUser, otherUser;
 
 // some valid ideas 
 var idea1, idea2, idea3, idea4, idea5;
@@ -26,37 +27,32 @@ describe('idea controller', function()
 
   before(function(done) 
   {
-    user = testUtils.generateValidUser();
+    // user = testUtils.generateValidUser();
     otherUser = testUtils.generateValidUser();
     idea1 = testUtils.generateValidIdea();
     idea2 = testUtils.generateValidIdea();
     idea3 = testUtils.generateValidIdea();
     idea4 = testUtils.generateValidIdea();
     idea5 = testUtils.generateValidIdea();
-    integrationTestUtils.createUser(user, function()
-    {
-      loginUser(user, function()
-      {
-        done();
-      });
-    });
+    done();
   })
-
 
   describe('create idea', function()
   {
-
     var ideaId, ideaId2;
     before(function(done)
     {
-      done();
+      setup(function()
+      {
+        done();
+      });
     })
 
     it('should create a new idea', function(done)
     {
       var req = request
         .post('/v1/idea/create');
-        agent.attachCookies(req);
+        testAgent.attachCookies(req);
         req.send({title:idea1.title, content: idea1.content})
            .end(function(err, res) 
            {
@@ -70,7 +66,7 @@ describe('idea controller', function()
     {
       var req = request
         .post('/v1/idea/create');
-        agent.attachCookies(req);
+        testAgent.attachCookies(req);
         req.send({title:"", content: undefined})
            .end(function(err, res) 
            {
@@ -83,7 +79,7 @@ describe('idea controller', function()
     {
       var req = request
         .post('/v1/idea/create');
-        agent.attachCookies(req);
+        testAgent.attachCookies(req);
         req.send({title:"< script x", content: undefined})
            .end(function(err, res) 
            {
@@ -97,7 +93,7 @@ describe('idea controller', function()
     {
       var req = request
         .post('/v1/idea/create');
-        agent.attachCookies(req);
+        testAgent.attachCookies(req);
         req.send({title:" ", content: undefined})
            .end(function(err, res) 
            {
@@ -111,7 +107,7 @@ describe('idea controller', function()
     {
       var req = request
         .post('/v1/idea/create');
-        agent.attachCookies(req);
+        testAgent.attachCookies(req);
         req.send({title:"", content: "<"})
           .end(function(err, res) 
           {
@@ -120,7 +116,7 @@ describe('idea controller', function()
             var url = '/v1/idea/read/'+ideaId2;
             var req = request
              .get(url)
-            agent.attachCookies(req);
+            testAgent.attachCookies(req);
             req.end(function(err,res)
             {
               integrationTestUtils.shouldBeSuccess(res, 200);
@@ -135,7 +131,13 @@ describe('idea controller', function()
     {
       integrationTestUtils.deleteIdea(ideaId, function()
       {
-        integrationTestUtils.deleteIdea(ideaId2,done);
+        integrationTestUtils.deleteIdea(ideaId2, function()
+        {
+          integrationTestUtils.deleteUserFromDB(testUser, function()
+          {
+            done();
+          });
+        });
       });
     })
 
@@ -144,13 +146,15 @@ describe('idea controller', function()
 
   describe('updateIdea', function()
   {
-
     var ideaId2;
     before(function(done)
     {
-      setupEditAndGet(function()
+      setup(function()
       {
-         done();
+        setupEditAndGet(function()
+        {
+          done();
+        });
       });
     });        
 
@@ -161,7 +165,7 @@ describe('idea controller', function()
         var url = '/v1/idea/update/'+id;
         var req = request
           .post(url);
-        agent.attachCookies(req);
+        testAgent.attachCookies(req);
         req.send({title:idea2.title, content: idea2.content})
            .end(function(err, res) 
            {
@@ -170,7 +174,7 @@ describe('idea controller', function()
              var url = '/v1/idea/read/'+id;
              var req = request
               .post(url);
-              agent.attachCookies(req);
+              testAgent.attachCookies(req);
               req.end(function(err, res) 
               {
                 res.body.result.title.should.equal(idea2.title);
@@ -190,7 +194,7 @@ describe('idea controller', function()
         var url = '/v1/idea/update/'+id;
         var req = request
           .post(url);
-        agent.attachCookies(req);
+        testAgent.attachCookies(req);
         req.send({title:"<script>", content: idea2.content})
            .end(function(err, res) 
            {
@@ -209,7 +213,7 @@ describe('idea controller', function()
         var url = '/v1/idea/update/'+id;
         var req = request
           .post(url);
-        agent.attachCookies(req);
+        testAgent.attachCookies(req);
         req.send({title:" ", content: undefined})
            .end(function(err, res) 
            {
@@ -227,7 +231,7 @@ describe('idea controller', function()
         var url = '/v1/idea/update/'+id;
         var req = request
           .post(url);
-        agent.attachCookies(req);
+        testAgent.attachCookies(req);
         req.send({title:"", content: "<"})
           .end(function(err, res) 
           {
@@ -235,7 +239,7 @@ describe('idea controller', function()
             var url = '/v1/idea/read/'+id;
             var req = request
              .get(url)
-            agent.attachCookies(req);
+            testAgent.attachCookies(req);
             req.end(function(err,res)
             {
               integrationTestUtils.shouldBeSuccess(res, 200);
@@ -256,12 +260,12 @@ describe('idea controller', function()
           {
             integrationTestUtils.logoutUser(function()
             {
-              loginUser(user, function()
+              loginUser(testUser, function()
               {
                 var url = '/v1/idea/update/'+id;
                 var req = request
                   .post(url);
-                agent.attachCookies(req);
+                testAgent.attachCookies(req);
                 req.send({title:idea1.title, content: undefined})
                   .end(function(err, res) 
                   {
@@ -281,7 +285,7 @@ describe('idea controller', function()
       var url = '/v1/idea/update/'+id;
       var req = request
         .post(url);
-        agent.attachCookies(req);
+        testAgent.attachCookies(req);
         req.send({title:idea1.title, content: undefined})
            .end(function(err, res) 
            {
@@ -294,7 +298,10 @@ describe('idea controller', function()
     {
       breakdownEditAndGet(function()
       {
-        done();
+        integrationTestUtils.deleteUserFromDB(testUser, function()
+        {
+          done();
+        });
       });
     });
 
@@ -305,29 +312,32 @@ describe('idea controller', function()
   {
     before(function(done)
     {
-      var req = request
-        .post('/v1/idea/create');
-        agent.attachCookies(req);
-        req.send({title:idea3.title, content: idea3.content})
-           .end(function(err, res) 
-           {
-             req = request
-             .post('/v1/idea/create');
-             agent.attachCookies(req);
-             req.send({title:idea4.title, content: idea4.content})
-             .end(function(err, res)
+      setup(function()
+      {
+        var req = request
+          .post('/v1/idea/create');
+          testAgent.attachCookies(req);
+          req.send({title:idea3.title, content: idea3.content})
+             .end(function(err, res) 
              {
-               integrationTestUtils.shouldBeSuccess(res, 201);
-               done();
+               req = request
+               .post('/v1/idea/create');
+               testAgent.attachCookies(req);
+               req.send({title:idea4.title, content: idea4.content})
+               .end(function(err, res)
+               {
+                 integrationTestUtils.shouldBeSuccess(res, 201);
+                 done();
+               });
              });
-           });
+      });
     })
 
     it('should read all ideas of the authenticated user', function(done)
     {
       var req = request
         .get('/v1/idea/read');
-      agent.attachCookies(req); 
+      testAgent.attachCookies(req); 
       req.end(function(err, res)
       {
         res.body.result.length.should.equal(2);
@@ -345,7 +355,7 @@ describe('idea controller', function()
           .end(function(err, res)
         {
           integrationTestUtils.shouldBeFailure(res, 401);
-          loginUser(user, function()
+          loginUser(testUser, function()
           {
             done();
           });
@@ -354,7 +364,13 @@ describe('idea controller', function()
 
     after(function(done)
     {
-      integrationTestUtils.deleteIdeas(done);
+      integrationTestUtils.deleteIdeas(function()
+      {
+        integrationTestUtils.deleteUserFromDB(testUser, function()
+        {
+          done();
+        }); 
+      });
     })
   })
 
@@ -363,9 +379,12 @@ describe('idea controller', function()
   {
     before(function(done)
     {
-      setupEditAndGet(function()
+      setup(function()
       {
-         done();
+        setupEditAndGet(function()
+        {
+          done();
+        });
       });
     });        
 
@@ -376,7 +395,7 @@ describe('idea controller', function()
         var url = '/v1/idea/read/'+id;
         var req = request
           .get(url);
-        agent.attachCookies(req);
+        testAgent.attachCookies(req);
         req.end(function(err, res) 
         {
           integrationTestUtils.shouldBeSuccess(res, 200);
@@ -391,7 +410,7 @@ describe('idea controller', function()
       var url = '/v1/idea/read/'+id;
       var req = request
         .get(url);
-        agent.attachCookies(req);
+        testAgent.attachCookies(req);
         req.end(function(err, res) 
         {
           integrationTestUtils.shouldBeFailure(res, 500);
@@ -409,12 +428,12 @@ describe('idea controller', function()
           {
             integrationTestUtils.logoutUser(function()
             {
-              loginUser(user, function()
+              loginUser(testUser, function()
               {
                 var url = '/v1/idea/read/'+id;
                 var req = request
                   .get(url);
-                agent.attachCookies(req);
+                testAgent.attachCookies(req);
                 req.end(function(err, res) 
                 {
                   integrationTestUtils.shouldBeFailure(res, 403);
@@ -431,7 +450,10 @@ describe('idea controller', function()
     {
       breakdownEditAndGet(function()
       {
-        done();
+        integrationTestUtils.deleteUserFromDB(testUser, function()
+        {
+          done();
+        });
       });
     });
 
@@ -439,10 +461,7 @@ describe('idea controller', function()
 
   after(function(done)
   {
-    integrationTestUtils.deleteUserFromDB(user, function()
-    {
-      done();
-    });
+    done();
   })
 
 })
@@ -452,7 +471,7 @@ var loginUser = function (user, callback)
 {
   integrationTestUtils.login(request, {email: user.email, password: user.password}, function(loginAgent)
   {
-    agent = loginAgent;
+    testAgent = loginAgent;
     callback();
   });
 }
@@ -471,7 +490,7 @@ var setupEditAndGet = function(callback)
           {
             integrationTestUtils.logoutUser(function()
             {
-              loginUser(user, function()
+              loginUser(testUser, function()
               {
                 callback();
               });
@@ -495,7 +514,7 @@ var breakdownEditAndGet = function(callback)
         {
           integrationTestUtils.deleteUserFromDB(otherUser, function()
           {
-            loginUser(user, function()
+            loginUser(testUser, function()
             {
               callback(); 
             });
@@ -503,5 +522,16 @@ var breakdownEditAndGet = function(callback)
         });
       });
     });
+  });
+}
+
+
+var setup = function(callback)
+{
+  integrationTestUtils.createAndLoginUser(function(user,agent)
+  {
+    testUser = user;
+    testAgent = agent;
+    callback();
   });
 }

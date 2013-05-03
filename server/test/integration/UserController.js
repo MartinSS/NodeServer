@@ -9,23 +9,22 @@ var express = require('express'),
     superagent = require('superagent'),
     agent = superagent.agent(),
     testUtils = require('../test_utils'),
-    integrationTestUtils = require('./integration_test_utils'),
+    integrationTestUtils = require('../integration_test_utils'),
     utils = require('../../utils');
 
 // used to log users in and track their cookies (using superagent module)
-var agent;
+var testAgent;
 
 describe('user controller', function()
 {
-
-  var user = testUtils.generateValidUser();
   var changedUser = testUtils.generateValidUser();
-  var malUser;
+  var testUser, malUser;
 
   describe('createUser', function()
   {
     before(function(done)
     {
+      testUser = testUtils.generateValidUser();
       done();
     })
 
@@ -33,7 +32,7 @@ describe('user controller', function()
     {
       var req = request
         .post('/v1/user/create')
-        .send(user)
+        .send(testUser)
           .end(function(err, res)
           {
             if (err) throw error;
@@ -44,7 +43,7 @@ describe('user controller', function()
 
     it('should create a user which can successfully login', function(done)
     {
-      loginUser(user,done);
+      loginUser(testUser,done);
     })
 
     it('should not attempt to create a user if givenName not provided', function(done)
@@ -101,7 +100,7 @@ describe('user controller', function()
     it('cannnot create a user if email is duplicate', function(done)
     {
       malUser = testUtils.generateValidUser();
-      malUser.email = user.email;
+      malUser.email = testUser.email;
       caseInvalidCreate(malUser, function()
       {
         done();
@@ -130,7 +129,7 @@ describe('user controller', function()
 
     after(function(done)
     {
-      integrationTestUtils.deleteUserFromDB(user, function()
+      integrationTestUtils.deleteUserFromDB(testUser, function()
       {
         done();
       });
@@ -143,12 +142,11 @@ describe('user controller', function()
   {
     before(function(done) 
     {
-      integrationTestUtils.createUser(user, function()
+      integrationTestUtils.createAndLoginUser(function(user,agent)
       {
-        loginUser(user, function()
-        {
-          done();
-        });
+        testUser = user;
+        testAgent = agent;
+        done();
       });
     }); 
 
@@ -156,11 +154,11 @@ describe('user controller', function()
     {
       var req = request
         .get('/v1/user/read');
-        agent.attachCookies(req);
+        testAgent.attachCookies(req);
         req.end(function(err, res)
         {
           if (err) return done(err);
-          var re = new RegExp(user.givenName+".*");
+          var re = new RegExp(testUser.givenName+".*");
           res.text.should.match(re);
           integrationTestUtils.shouldBeSuccess(res, 200);
           done();
@@ -182,7 +180,7 @@ describe('user controller', function()
 
     after(function(done)
     {
-      integrationTestUtils.deleteUserFromDB(user, function()
+      integrationTestUtils.deleteUserFromDB(testUser, function()
       {
         done();
       });
@@ -196,20 +194,20 @@ describe('user controller', function()
 
     before(function(done) 
     {
-      integrationTestUtils.createUser(user, function()
+      integrationTestUtils.createAndLoginUser(function(user,agent)
       {
-        loginUser(user, function()
-        {
-          done();
-        });
+        testUser = user;
+        testAgent = agent;
+        done();
       });
-    }); 
+    })
+
 
     it('should change the information in a user profile', function(done)
     {
       var req = request
         .post('/v1/user/update');
-        agent.attachCookies(req);
+        testAgent.attachCookies(req);
         req.send({"givenName": changedUser.givenName, "familyName": changedUser.familyName, email: changedUser.email, password: changedUser.password})  
           .end(function(err, res)
           {
@@ -217,7 +215,7 @@ describe('user controller', function()
             // check content changed
             req = request
             .get('/v1/user/read');
-            agent.attachCookies(req);
+            testAgent.attachCookies(req);
             req.end(function(err, res)
             {
               res.body.result.givenName.should.equal(changedUser.givenName);
