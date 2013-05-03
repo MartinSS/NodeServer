@@ -1,10 +1,11 @@
-var app = require('../../app.js'),
+var app = require('../app.js'),
     request = require('supertest')(app),
     superagent = require('superagent'),
     agent = superagent.agent(),
-    utils = require('../../utils'),
-    User = require('../../models/user').User,
-    Idea = require('../../models/idea').Idea,
+    utils = require('../utils'),
+    User = require('../models/user').User,
+    Idea = require('../models/idea').Idea,
+    testUtils = require('./test_utils'),
     should = require('should');
 
 /*
@@ -79,6 +80,19 @@ var integrationUtils =
         integrationUtils.shouldBeSuccess(res,201);
         callback();
       });
+  },
+
+  // generates valid user, creates user in system, then logs user in
+  createAndLoginUser: function(callback)
+  {
+    var user = testUtils.generateValidUser();
+    integrationUtils.createUser(user, function()
+    {
+      loginUser(user, function()
+      {
+        callback(user,agent);
+      });
+    });
   },
 
   // create delete 
@@ -202,6 +216,14 @@ var integrationUtils =
 module.exports = integrationUtils;
 
 
+var loginUser = function (user, callback)
+{
+  integrationUtils.login(request, {"email": user.email, "password": user.password}, function(loginAgent)
+  {
+    agent = loginAgent;
+    callback();
+  });
+}
 
 
 

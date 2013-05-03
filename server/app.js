@@ -24,9 +24,32 @@ var app = module.exports = express();
 var User = require('./models/user').User;
 var Session = require('./models/session').Session;
 
-app.configure(function()
+app.configure('production', function()
 {
   app.use(express.logger());
+});
+
+app.configure('development', function()
+{
+  app.use(express.logger());
+  app.use(express.errorHandler(
+  {
+    dumpExceptions: true,
+    showStack: true
+  }));
+});
+
+app.configure('test', function()
+{
+  app.use(express.errorHandler(
+  {
+    dumpExceptions: true,
+    showStack: true
+  }));
+});
+
+app.configure(function()
+{
   app.use(express.cookieParser());
   app.use(express.bodyParser());
   app.use(express.methodOverride());
@@ -40,14 +63,9 @@ app.configure(function()
   app.use(app.router);
 });
 
-app.configure('development', function()
-{
-  app.use(express.errorHandler(
-  {
-    dumpExceptions: true,
-    showStack: true
-  }));
-});
+
+
+
 
 // set database environment and connect
 app.set('dbUrl', config.db[app.settings.env]);
