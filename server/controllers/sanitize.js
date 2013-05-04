@@ -11,8 +11,6 @@ module.exports =
 
     // escape %, <, >, and "
     reqBody.content = sanitize(reqBody.content).entityEncode();
-
-    return reqBody;
   },
 
   // sanitizes inputs to createIdea controller method which need to be saniitized
@@ -21,8 +19,6 @@ module.exports =
 
     // escape %, <, >, and "
     reqBody.content = sanitize(reqBody.content).entityEncode();
-
-    return reqBody;
   }
 
 };

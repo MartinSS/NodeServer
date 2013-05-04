@@ -1,5 +1,6 @@
 var passwordChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>!@#$%^&*()_+-=;'\".,/?";
 var nameChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-";
+var domainChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.";
 var topLevelDomains = ['info', 'com', 'org', 'net', 'edu', 'co', 'biz', 'gov', 'mil'];
 
 // generate a random 'name' of length n
@@ -13,6 +14,29 @@ var generateName = function(n)
 
   return result;
 }
+
+// generate a random domain name of length n
+var generateDomainName = function(n)
+{
+  var result = '';
+  for (var i = 0 ; i < n ; i++)
+  {
+    result += domainChars[Math.floor(Math.random()*domainChars.length)];
+  }
+  
+  while (result.charAt(0) == '-' || result.charAt(0) == '.') // fix ends which can't be hyphens for valid domain
+  {
+    result = domainChars[Math.floor(Math.random()*domainChars.length)] + result.slice(1);
+  }
+  while (result.charAt(n-1) == '-' || result.charAt(n-1) == '.') // fix ends which can't be hyphens for valid domain
+  {
+    result = result.slice(0,n-1) + domainChars[Math.floor(Math.random()*domainChars.length)];
+  }
+
+  return result;
+}
+
+
 
 // generate a random password of length n
 var generatePassword = function(n)
@@ -29,7 +53,7 @@ var generatePassword = function(n)
 // generate a random 'email' address of name length m and domain length n
 var generateEmailAddress = function(m, n)
 {
-  var result = generateName(m) + '@' + generateName(n) + '.' + topLevelDomains[Math.floor(Math.random()*topLevelDomains.length)];
+  var result = generateName(m) + '@' + generateDomainName(n) + '.' + topLevelDomains[Math.floor(Math.random()*topLevelDomains.length)];
 
   return result;
 }

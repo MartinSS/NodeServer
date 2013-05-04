@@ -144,7 +144,7 @@ var ideaController =
     try
     {
       var reqIdea = validate.createIdea(req.body);
-      reqIdea = sanitize.createIdea(reqIdea); 
+        sanitize.createIdea(reqIdea);
 
       var idea = new Idea(
       {
@@ -211,7 +211,7 @@ var ideaController =
         {
 
           var reqIdea = validate.createIdea(req.body);
-          reqIdea = sanitize.createIdea(reqIdea); 
+          sanitize.createIdea(reqIdea); 
           idea.title = reqIdea.title;
           idea.content = reqIdea.content;
           idea.save();
