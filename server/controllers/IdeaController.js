@@ -1,7 +1,16 @@
 var Idea = require('../models/idea').Idea,
     utils = require('../utils'),
-    validate = require('./validate');
+    validate = require('./validate'),
+    response = require('../response'),
     sanitize = require('./sanitize');
+
+
+var SERVER_ERROR = 500;
+var BAD_REQUEST = 400;
+var METHOD_NOT_ALLOWED = 405;
+var RESOURCE_CREATED = 201;
+var NO_CONTENT = 204;
+var NOT_AUTHORIZED = 403;
 
 var ideaController =
 {
@@ -24,15 +33,15 @@ var ideaController =
     {
       if (err)
       {
-        res.json(utils.failure('Error accessing ideas database.')).status(500);
+        response.failure(res,'Error accessing ideas database.',SERVER_ERROR);
       }
       else if (!ideas)
       {
-        res.json(utils.failure('No ideas found in database.')).status(204);
+        response.failure(res,'No ideas found in database.',NO_CONTENT);
       }
       else
       {
-        res.json(utils.success(ideas));
+        response.success(res,ideas);
       }
     });
   },
@@ -52,11 +61,11 @@ var ideaController =
     {
       if (err) 
       {
-        res.json(utils.failure('Error deleting ideas')).status(400);
+        response.failure(res,'Error deleting ideas.',SERVER_ERROR);
       }
       else
       {
-        res.json(utils.success());
+        response.success(res);
       }
     });
   },
@@ -80,21 +89,21 @@ var ideaController =
     {
       if (err)
       {
-        res.json(utils.failure('Error accessing idea in database.')).status(500);
+        response.failure(res,'Error accessing idea in database.',SERVER_ERROR);
       }
       else if (!idea)
       {
-        res.json(utils.failure('Idea not in database.')).status(204);
+        response.failure(res,'Idea not in database.', NO_CONTENT);
       }
       else
       {
         if ( idea.userId != req.user.email ) // not authorized
         {
-          res.json(utils.failure('Idea not owned by user')).status(403);
+          response.failure(res,'Idea not owned by user',NOT_AUTHORIZED);
         }
         else
         {
-          res.json(utils.success(idea));
+          response.success(res,idea);
         }
       }
     });
@@ -117,11 +126,11 @@ var ideaController =
     {
       if (err) 
       {
-        res.json(utils.failure('Error deleting idea')).status(500);
+        response.failure(res,'Error deleting idea',SERVER_ERROR);
       }
       else
       {
-        res.json(utils.success());
+        response.success(res);
       }
     });
   },
@@ -141,15 +150,19 @@ var ideaController =
 
   createIdea: function (req, res)
   {
-    try
+
+    if (!validate.createIdea(req.body))
     {
-      var reqIdea = validate.createIdea(req.body);
-        sanitize.createIdea(reqIdea);
+      response.failure(res,validate.getErrors(),BAD_REQUEST);
+    }
+    else
+    {
+      sanitize.createIdea(req.body);
 
       var idea = new Idea(
       {
-        title: reqIdea.title,
-        content: reqIdea.content,
+        title: req.body.title,
+        content: req.body.content,
         userId: req.user.email
       });
   
@@ -157,21 +170,20 @@ var ideaController =
       {
         if (err)
         {
-          res.json(utils.failure('Failure saving data')).status(500);
+          response.failure(res,'Failure saving data',SERVER_ERROR);
         }
         Idea.findById(idea, function (err)
         {
           if (err)
           {
-            res.json(utils.failure('Failure reading data')).status(500); 
+            response.failure(res,'Failure reading data',SERVER_ERROR);
           }
-          res.json(utils.success({"id": idea._id})).status(201);
+          else
+          {
+            response.success(res,{"id": idea._id},RESOURCE_CREATED);
+          }
         });
       });
-     }
-     catch (err)
-     {
-       res.json(utils.failure(err.message)).status(400);
      }
   },
 
@@ -198,33 +210,32 @@ var ideaController =
       {
         if (!idea)
         {
-          res.json(utils.failure("Can't update a non-existing idea")).status(400);
+          response.failure(res,"Can't update a non-existing idea",BAD_REQUEST);
         }
         else
         {
-          res.json(utils.failure('Error occurred accessing session')).status(500);
+          response.failure(res,'Error occurred accessing session',SERVER_ERROR);
         }
       }
       else
       {
-        try
+        if (!validate.createIdea(req.body))
         {
-
-          var reqIdea = validate.createIdea(req.body);
-          sanitize.createIdea(reqIdea); 
-          idea.title = reqIdea.title;
-          idea.content = reqIdea.content;
-          idea.save();
-          res.json(utils.success({}));
+          response.failure(res,validate.getErrors(),BAD_REQUEST);
         }
-        catch (err)
+        else
         {
-          res.json(utils.failure(err.message)).status(400);
+          sanitize.createIdea(req.body); 
+          idea.title = req.body.title;
+          idea.content = req.body.content;
+          idea.save();
+          response.success(res,{}); 
         }
       }
     });
   }
 };
+
 
 // receive a reqeust for /v1/idea/*
 // this controller does the mapping to it's internal functions

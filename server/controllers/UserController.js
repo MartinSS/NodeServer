@@ -1,11 +1,16 @@
 var User = require('../models/user').User,
     Idea = require('../models/idea').Idea,
     utils = require('../utils'),
+    response = require('../response'),
     redis = require('redis'),
     validate = require('./validate'),
     bcrypt = require('bcrypt');
 
 var WORK_FACTOR = 10;
+var SERVER_ERROR = 500;
+var BAD_REQUEST = 400;
+var METHOD_NOT_ALLOWED = 405;
+var RESOURCE_CREATED = 201;
 
 var redisClient = redis.createClient();
 var signupUrl = "/v1/user/create";
@@ -25,54 +30,56 @@ var userController =
   // 500: server error accessing database
   createUser: function(req, res)
   {
-    try
+    if (!validate.createUser(req.body))
     {
-      var user = validate.createUser(req.body);
+      response.failure(res,validate.getErrors(),BAD_REQUEST);
+    }
+    else
+    {
       User.findOne(
       {
-        email: user.email
+        email: req.body.email
       }, function(err, usr)
       {
         if (err)
         {
-          res.json(utils.failure('Error accessing user')).status(500);
+          response.failure(res,'Error accessing user',SERVER_ERROR);
         }
         else
         {
           if (usr) // email already in use
           {
-            res.json(utils.failure('Email address already being used')).status(400);
+            response.failure(res,'Error accessing user',BAD_REQUEST);
           }
           else
           {
-            bcrypt.hash(user.password, WORK_FACTOR, function(err, hash)
+            bcrypt.hash(req.body.password, WORK_FACTOR, function(err, hash)
             {
-              if (err) throw 'Error creating password hash';
+              if (err) 
+              {
+                throw 'Error creating password hash';
+              }
               new User(
               {
-                givenName: user.givenName,
-                familyName: user.familyName,
-                email: user.email,
+                givenName: req.body.givenName,
+                familyName: req.body.familyName,
+                email: req.body.email,
                 password: hash
               }).save(function(err, idea, count)
               {
                 if (count) // save was successful
                 {
-                  res.json(utils.success({})).status(201);
+                  response.success(res, {}, RESOURCE_CREATED);
                 }
                 else
                 { // error writing to database
-                  res.json(utils.failure('Error accessing user')).status(500);
+                  response.failure(res,'Error accessing user',SERVER_ERROR);
                 }
               }) 
             });
           }
         }
       });
-    }
-    catch (err)
-    {
-      res.json(utils.failure(err.message)).status(400);
     }
   },
 
@@ -95,7 +102,7 @@ var userController =
       if (err)
       {
         console.log("error removing session cache userSessionHash:"+userSessionHash);
-        res.json(utils.failure('error removing session cache')).status(500);
+        response.failure(res,'Error removing session cache.', SERVER_ERROR);
       }
       else
       {
@@ -107,7 +114,7 @@ var userController =
         {
           if (err)
           {
-            res.json(utils.failure('Error deleting ideas.')).status(500);
+            response.failure(res,'Error deleting ideas.',SERVER_ERROR);
           }
           else
           {
@@ -120,13 +127,13 @@ var userController =
               {
                 // todo:
                 // create generic responnse
-                res.json(utils.failure('Error deleting user')).status(500);
+                response.failure(res,'Error deleting user.',SERVER_ERROR);
               }
               else
               {
                 // todo:
                 // remove data, logout,, remove user
-                res.json(utils.success());
+                response.success(res);
               }
             });
           }
@@ -152,15 +159,15 @@ var userController =
     {
       if (err)
       {
-        res.json(utils.failure('Error accessing user')).status(500);
+        response.failure(res,'Error accessing user.',SERVER_ERROR);
       }
       else if (!usr)
       {
-        res.json(utils.failure('User does not exist')).status(400);
+        response.failure(res,'User does not exist',BAD_REQUEST);
       }
       else
       {
-        res.json(utils.success(usr));
+        response.success(res,usr);
       }
     });
   },
@@ -178,38 +185,36 @@ var userController =
     {
       if (err)
       {
-        res.json(utils.failure('Error accessing user')).status(500);
+        response.failure(res,'Error accessing user.',SERVER_ERROR);
       }
       else if (!usr)
       {
-        res.json(utils.failure('User does not exist')).status(400);
+        response.failure(res,'User does not exist',BAD_REQUEST);
       }
       else
       {
-        try
-        {
-          var user = validate.updateUser(req.body);
-          bcrypt.hash(user.password, WORK_FACTOR, function(err, hash)
+          if (!validate.updateUser(req.body))
           {
-            if (err) throw new Error("Error creating password hash function");
-            usr.givenName = user.givenName;
-            usr.familyName = user.familyName;
-            usr.email = user.email;
-            usr.password = hash;
-            usr.save();
-            // update session cache
-            var userSessionHash = "session:"+usr._id;
-            redisClient.hmset(userSessionHash, "sessionID", req.sessionID, "email", usr.email,
-            "givenName", usr.givenName)
-            res.json(utils.success({}));
-          });
+            response.failure(res,validate.getErrors(),BAD_REQUEST);
+          }
+          else
+          {
+            bcrypt.hash(req.body.password, WORK_FACTOR, function(err, hash)
+            {
+              if (err) throw new Error("Error creating password hash function");
+              usr.givenName = req.body.givenName;
+              usr.familyName = req.body.familyName;
+              usr.email = req.body.email;
+              usr.password = hash;
+              usr.save();
+              // update session cache
+              var userSessionHash = "session:"+usr._id;
+              redisClient.hmset(userSessionHash, "sessionID", req.sessionID, "email", usr.email, "givenName", usr.givenName)
+              res.json(utils.success({}));
+            });
+          }
         }
-        catch (err)
-        {
-          res.json(utils.failure(err.message)).status(400);   
-        }
-      }
-    });
+      });
   }
 
 };
