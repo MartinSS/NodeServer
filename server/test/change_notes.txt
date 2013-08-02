@@ -1,0 +1,15 @@
+factor out common code
+
+create test utils class with exports
+
+factor out database calls
+
+create separate environment for testing and remove log statements from test results
+
+use our api to access edited user values, etc. instead of going directly to database
+
+create methods to generate user and idea test data, for different test cases 
+
+write requirements for and perform server systematic side validation of inputs
+
+write tests for login/logout functionality testing edge cases
